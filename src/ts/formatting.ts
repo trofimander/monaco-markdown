@@ -2,40 +2,40 @@
 
 import {editor, KeyCode, KeyMod, Position, Range, Selection,} from 'monaco-editor';
 
-export function activateFormatting(editor: editor.IStandaloneCodeEditor) {
-    console.log("Activating markdown formatting extension")
-    console.log(editor)
+function addKeybinding(editor: editor.IStandaloneCodeEditor, fun: CallableFunction, keybindings: number[], label: string) {
     editor.addAction({
         contextMenuGroupId: "markdown.extension.editing",
         contextMenuOrder: 0,
-        id: "markdown.extension.editing.toggleBold",
+        id: "markdown.extension.editing." + fun.name,
         keybindingContext: "",
-        keybindings: [KeyMod.CtrlCmd | KeyCode.KEY_B],
-        label: "Toggle bold",
+        keybindings: keybindings,
+        label: label,
         precondition: "",
         run(editor: editor.ICodeEditor): void | Promise<void> {
-            toggleBold(editor)
+            fun(editor)
             return undefined;
         }
     });
-    // context.subscriptions.push(
-    //     commands.registerCommand('', toggleBold),
-    //     commands.registerCommand('markdown.extension.editing.toggleItalic', toggleItalic),
-    //     commands.registerCommand('markdown.extension.editing.toggleCodeSpan', toggleCodeSpan),
-    //     commands.registerCommand('markdown.extension.editing.toggleStrikethrough', toggleStrikethrough),
-    //     commands.registerCommand('markdown.extension.editing.toggleMath', () => toggleMath(transTable)),
-    //     commands.registerCommand('markdown.extension.editing.toggleMathReverse', () => toggleMath(reverseTransTable)),
-    //     commands.registerCommand('markdown.extension.editing.toggleHeadingUp', toggleHeadingUp),
-    //     commands.registerCommand('markdown.extension.editing.toggleHeadingDown', toggleHeadingDown),
-    //     commands.registerCommand('markdown.extension.editing.toggleList', toggleList),
-    //     commands.registerCommand('markdown.extension.editing.paste', paste)
-    // );
+}
+
+export function activateFormatting(editor: editor.IStandaloneCodeEditor) {
+    console.log("Activating markdown formatting extension")
+    addKeybinding(editor, toggleBold, [KeyMod.CtrlCmd | KeyCode.KEY_B], "Toggle bold");
+    addKeybinding(editor, toggleItalic, [KeyMod.CtrlCmd | KeyCode.KEY_I], "Toggle italic");
+    addKeybinding(editor, toggleCodeSpan, [KeyMod.CtrlCmd | KeyCode.US_BACKTICK], "Toggle code span");
+    addKeybinding(editor, toggleStrikethrough, [KeyMod.Alt | KeyCode.KEY_S], "Toggle strikethrough");
+    // addKeybinding(editor, toggleMath, [KeyMod.CtrlCmd | KeyCode.KEY_B], "Toggle bold");
+    // addKeybinding(editor, toggleMathReverse, [KeyMod.CtrlCmd | KeyCode.KEY_B], "Toggle bold");
+    addKeybinding(editor, toggleHeadingUp, [KeyMod.WinCtrl | KeyMod.Shift | KeyCode.US_CLOSE_SQUARE_BRACKET], "Heading up");
+    addKeybinding(editor, toggleHeadingDown, [KeyMod.WinCtrl | KeyMod.Shift | KeyCode.US_OPEN_SQUARE_BRACKET], "Heading down");
+    // addKeybinding(editor, toggleList, [KeyMod.CtrlCmd | KeyCode.KEY_B], "Toggle bold");
+    // addKeybinding(editor, paste, [KeyMod.CtrlCmd | KeyCode.KEY_B], "Toggle bold");
 }
 
 /**
  * Here we store Regexp to check if the text is the single link.
  */
-// const singleLinkRegex: RegExp = createLinkRegex();
+const singleLinkRegex: RegExp = createLinkRegex();
 
 // Return Promise because need to chain operations in unit tests
 
@@ -43,49 +43,63 @@ function toggleBold(editor: editor.ICodeEditor) {
     return styleByWrapping(editor, '**');
 }
 
-// function toggleItalic(editor: editor.ICodeEditor) {
-//     return styleByWrapping(editor, '*');
-// }
-//
-// function toggleCodeSpan(editor: editor.ICodeEditor) {
-//     return styleByWrapping(editor, '`');
-// }
-//
-// function toggleStrikethrough(editor: editor.ICodeEditor) {
-//     return styleByWrapping(editor, '~~');
-// }
-//
-// async function toggleHeadingUp(editor: editor.ICodeEditor) {
-//     let selection = editor.getSelection();
-//     let model = editor.getModel();
-//     if (selection!= null && model != null ) {
-//         let lineIndex = selection.positionLineNumber;
-//
-//         let lineText = model.getLineContent(lineIndex);
-//
-//         return await editor.edit((editBuilder) => {
-//             if (!lineText.startsWith('#')) { // Not a heading
-//                 editBuilder.insert(new Position(lineIndex, 0), '# ');
-//             } else if (!lineText.startsWith('######')) { // Already a heading (but not level 6)
-//                 editBuilder.insert(new Position(lineIndex, 0), '#');
-//             }
-//         });
-//     }
-// }
-//
-// function toggleHeadingDown(editor: editor.ICodeEditor) {
-//     let lineIndex = editor.selection.active.line;
-//     let lineText = editor.document.lineAt(lineIndex).text;
-//
-//     editor.edit((editBuilder) => {
-//         if (lineText.startsWith('# ')) { // Heading level 1
-//             editBuilder.delete(Range.fromPositions(new Position(lineIndex, 0), new Position(lineIndex, 2)));
-//         } else if (lineText.startsWith('#')) { // Heading (but not level 1)
-//             editBuilder.delete(Range.fromPositions(new Position(lineIndex, 0), new Position(lineIndex, 1)));
-//         }
-//     });
-// }
+function toggleItalic(editor: editor.ICodeEditor) {
+    return styleByWrapping(editor, '*');
+}
 
+function toggleCodeSpan(editor: editor.ICodeEditor) {
+    return styleByWrapping(editor, '`');
+}
+
+function toggleStrikethrough(editor: editor.ICodeEditor) {
+    return styleByWrapping(editor, '~~');
+}
+
+function toggleHeadingUp(editor: editor.ICodeEditor) {
+    let selection = editor.getSelection();
+    let model = editor.getModel();
+
+    let lineIndex = selection.positionLineNumber;
+
+    let lineText = model.getLineContent(lineIndex);
+
+    let text;
+
+    if (!lineText.startsWith('#')) { // Not a heading
+        text = '# '
+    } else if (!lineText.startsWith('######')) { // Already a heading (but not level 6)
+        text = '#'
+    } else text = undefined;
+
+    if (text) {
+        return model.pushEditOperations([selection],
+            [{range: new Range(lineIndex, 0, lineIndex, 0), text: text}],
+            (): Selection[] => {
+                return [];
+            })
+    }
+}
+
+function toggleHeadingDown(editor: editor.ICodeEditor) {
+    let selection = editor.getSelection();
+    let lineIndex = selection.getPosition().lineNumber;
+    let lineText = editor.getModel().getLineContent(lineIndex);
+
+    let edits = []
+
+    if (lineText.startsWith('# ')) { // Heading level 1
+        edits.push({range: Range.fromPositions(new Position(lineIndex, 0), new Position(lineIndex, 3)), text: ''});
+    } else if (lineText.startsWith('#')) { // Heading (but not level 1)
+        edits.push({range: Range.fromPositions(new Position(lineIndex, 0), new Position(lineIndex, 2)), text: ''});
+    }
+
+    return editor.getModel().pushEditOperations([selection], edits,
+        (): Selection[] => {
+            return [selection];
+        })
+}
+
+//
 // enum MathBlockState {
 //     // State 1: not in any others states
 //     NONE,
@@ -122,15 +136,15 @@ function toggleBold(editor: editor.ICodeEditor) {
 //         }
 //     }
 // }
-
-// /**
-//  * Modify the document, change from `oldMathBlockState` to `newMathBlockState`.
-//  * @param editor
-//  * @param cursor
-//  * @param oldMathBlockState
-//  * @param newMathBlockState
-//  */
-// function setMathState(editor: IEditor, cursor: Position, oldMathBlockState: MathBlockState, newMathBlockState: MathBlockState) {
+//
+/**
+ * Modify the document, change from `oldMathBlockState` to `newMathBlockState`.
+ * @param editor
+ * @param cursor
+ * @param oldMathBlockState
+ * @param newMathBlockState
+ */
+// function setMathState(editor: editor.ICodeEditor, cursor: Position, oldMathBlockState: MathBlockState, newMathBlockState: MathBlockState) {
 //     // Step 1: Delete old math block.
 //     editor.edit(editBuilder => {
 //         let rangeToBeDeleted: Range
@@ -191,7 +205,7 @@ function toggleBold(editor: editor.ICodeEditor) {
 //         })
 //     });
 // }
-
+//
 // const transTable = [
 //     MathBlockState.NONE,
 //     MathBlockState.INLINE,
@@ -199,20 +213,27 @@ function toggleBold(editor: editor.ICodeEditor) {
 //     MathBlockState.SINGLE_DISPLAYED
 // ];
 // const reverseTransTable = new Array(...transTable).reverse();
+
+// function toggleMath(editor: editor.ICodeEditor) {
+//     return doToggleMath(editor, transTable)
+// }
 //
-// function toggleMath(transTable) {
-//     let editor = window.activeTextEditor;
-//     if (!editor.selection.isEmpty) return;
-//     let cursor = editor.selection.active;
+// function toggleMathReverse(editor: editor.ICodeEditor) {
+//     return doToggleMath(editor, reverseTransTable)
+// }
+
+//
+// function doToggleMath(editor: editor.ICodeEditor, transTable) {
+//     if (!editor.getSelection().isEmpty) return;
+//     let cursor = editor.getSelection().getPosition();
 //
 //     let oldMathBlockState = getMathState(editor, cursor)
 //     let currentStateIndex = transTable.indexOf(oldMathBlockState);
 //     setMathState(editor, cursor, oldMathBlockState, transTable[(currentStateIndex + 1) % transTable.length])
 // }
 //
-// function toggleList() {
-//     const editor = window.activeTextEditor;
-//     const doc = editor.document;
+// function toggleList(editor: editor.ICodeEditor) {
+//     const doc = editor.getModel();
 //
 //     editor.selections.forEach(selection => {
 //         if (selection.isEmpty) {
@@ -246,7 +267,7 @@ function toggleBold(editor: editor.ICodeEditor) {
 //         wsEdit.insert(doc.uri, new Position(line, indentation), "- ");
 //     }
 // }
-//
+
 // async function paste() {
 //     const editor = window.activeTextEditor;
 //     const selection = editor.selection;
@@ -258,46 +279,46 @@ function toggleBold(editor: editor.ICodeEditor) {
 //     }
 //     return commands.executeCommand("editor.action.clipboardPasteAction");
 // }
+//
+// /**
+//  * Creates Regexp to check if the text is a link (further detailes in the isSingleLink() documentation).
+//  *
+//  * @return Regexp
+//  */
+function createLinkRegex(): RegExp {
+    // unicode letters range(must not be a raw string)
+    const ul = '\\u00a1-\\uffff';
+    // IP patterns
+    const ipv4_re = '(?:25[0-5]|2[0-4]\\d|[0-1]?\\d?\\d)(?:\\.(?:25[0-5]|2[0-4]\\d|[0-1]?\\d?\\d)){3}';
+    const ipv6_re = '\\[[0-9a-f:\\.]+\\]';  // simple regex (in django it is validated additionally)
 
-/**
- * Creates Regexp to check if the text is a link (further detailes in the isSingleLink() documentation).
- *
- * @return Regexp
- */
-// function createLinkRegex(): RegExp {
-//     // unicode letters range(must not be a raw string)
-//     const ul = '\\u00a1-\\uffff';
-//     // IP patterns
-//     const ipv4_re = '(?:25[0-5]|2[0-4]\\d|[0-1]?\\d?\\d)(?:\\.(?:25[0-5]|2[0-4]\\d|[0-1]?\\d?\\d)){3}';
-//     const ipv6_re = '\\[[0-9a-f:\\.]+\\]';  // simple regex (in django it is validated additionally)
-//
-//
-//     // Host patterns
-//     const hostname_re = '[a-z' + ul + '0-9](?:[a-z' + ul + '0-9-]{0,61}[a-z' + ul + '0-9])?';
-//     // Max length for domain name labels is 63 characters per RFC 1034 sec. 3.1
-//     const domain_re = '(?:\\.(?!-)[a-z' + ul + '0-9-]{1,63}(?<!-))*';
-//
-//     const tld_re = ''
-//         + '\\.'                               // dot
-//         + '(?!-)'                             // can't start with a dash
-//         + '(?:[a-z' + ul + '-]{2,63}'         // domain label
-//         + '|xn--[a-z0-9]{1,59})'              // or punycode label
-//         + '(?<!-)'                            // can't end with a dash
-//         + '\\.?'                              // may have a trailing dot
-//     ;
-//
-//     const host_re = '(' + hostname_re + domain_re + tld_re + '|localhost)';
-//     const pattern = ''
-//         + '^(?:[a-z0-9\\.\\-\\+]*)://'  // scheme is not validated (in django it is validated additionally)
-//         + '(?:[^\\s:@/]+(?::[^\\s:@/]*)?@)?'  // user: pass authentication
-//         + '(?:' + ipv4_re + '|' + ipv6_re + '|' + host_re + ')'
-//         + '(?::\\d{2,5})?'  // port
-//         + '(?:[/?#][^\\s]*)?'  // resource path
-//         + '$' // end of string
-//     ;
-//
-//     return new RegExp(pattern, 'i');
-// }
+
+    // Host patterns
+    const hostname_re = '[a-z' + ul + '0-9](?:[a-z' + ul + '0-9-]{0,61}[a-z' + ul + '0-9])?';
+    // Max length for domain name labels is 63 characters per RFC 1034 sec. 3.1
+    const domain_re = '(?:\\.(?!-)[a-z' + ul + '0-9-]{1,63}(?<!-))*';
+
+    const tld_re = ''
+        + '\\.'                               // dot
+        + '(?!-)'                             // can't start with a dash
+        + '(?:[a-z' + ul + '-]{2,63}'         // domain label
+        + '|xn--[a-z0-9]{1,59})'              // or punycode label
+        + '(?<!-)'                            // can't end with a dash
+        + '\\.?'                              // may have a trailing dot
+    ;
+
+    const host_re = '(' + hostname_re + domain_re + tld_re + '|localhost)';
+    const pattern = ''
+        + '^(?:[a-z0-9\\.\\-\\+]*)://'  // scheme is not validated (in django it is validated additionally)
+        + '(?:[^\\s:@/]+(?::[^\\s:@/]*)?@)?'  // user: pass authentication
+        + '(?:' + ipv4_re + '|' + ipv6_re + '|' + host_re + ')'
+        + '(?::\\d{2,5})?'  // port
+        + '(?:[/?#][^\\s]*)?'  // resource path
+        + '$' // end of string
+    ;
+
+    return new RegExp(pattern, 'i');
+}
 
 /**
  * Checks if the string is a link. The list of link examples you can see in the tests file
@@ -308,9 +329,9 @@ function toggleBold(editor: editor.ICodeEditor) {
  *
  * @return boolean
  */
-// export function isSingleLink(text: string): boolean {
-//     return singleLinkRegex.test(text);
-// }
+export function isSingleLink(text: string): boolean {
+    return singleLinkRegex.test(text);
+}
 
 function styleByWrapping(editor: editor.ICodeEditor, startPattern: string, endPattern?: string) {
     if (endPattern == undefined) {
