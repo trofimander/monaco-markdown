@@ -3,29 +3,23 @@ import {
     Position,
     Range,
     Selection,
-    TextEditorRevealType,
+    TextEditorRevealType, WorkspaceEdit,
 } from './extHostTypes';
 
-import {editor, Range as _Range, Position as _Position, IRange, Uri} from "monaco-editor";
-import * as vscode from "vscode";
+import {
+    editor,
+    Range as _Range,
+    Position as _Position,
+    Selection as _Selection,
+    IRange,
+    Uri,
+    Thenable
+} from "monaco-editor";
 import {regExpLeadsToEndlessLoop} from "./vscode-utils";
 import {ensureValidWordDefinition, getWordAtText} from "./wordHelper";
 
 import * as TypeConverters from './vscode-converters'
 import {TextLine} from "./vscode-common";
-
-
-function rangeToMonaco(range: Range): _Range {
-    return new _Range(range.start.line, range.start.character, range.end.line, range.end.character);
-}
-
-function positionToMonaco(position: Position): _Position {
-    return new _Position(position.line, position.character)
-}
-
-function positionToVsCode(position: _Position): Position {
-    return new Position(position.lineNumber, position.column)
-}
 
 const _modeId2WordDefinition = new Map<string, RegExp>();
 
@@ -110,7 +104,7 @@ export class TextDocument {
     }
 
     getText(range?: Range): string {
-        return this.model.getValueInRange(rangeToMonaco(range));
+        return this.model.getValueInRange(TypeConverters.Range.from(range));
     }
 
     lineAt(lineOrPosition: number | Position): TextLine {
@@ -151,19 +145,18 @@ export class TextDocument {
     }
 
     offsetAt(position: Position): number {
-        return this.model.getOffsetAt(positionToMonaco(position))
+        return this.model.getOffsetAt(TypeConverters.Position.from(position))
     }
 
     positionAt(offset: number): Position {
-        return positionToVsCode(this.model.getPositionAt(offset))
+        return TypeConverters.Position.to(this.model.getPositionAt(offset))
     }
 
     save(): Thenable<boolean> {
         throw new Error("Not implemented")
     }
 
-
-    validateRange(range: vscode.Range): vscode.Range {
+    validateRange(range: Range): Range {
         if (!(range instanceof Range)) {
             throw new Error('Invalid argument');
         }
@@ -253,6 +246,7 @@ export class TextEditor {
     get selection(): Selection {
         return TypeConverters.Selection.to(this._editor.getSelection())
     }
+
     get selections(): Selection[] {
         return this._editor.getSelections().map(s => TypeConverters.Selection.to(s))
     }
@@ -324,13 +318,10 @@ export class TextEditor {
             };
         });
 
-        this._editor.getModel().applyEdits(edits)
-
-        // .$tryApplyEdits(this._id, editData.documentVersionId, edits, {
-        // setEndOfLine: typeof editData.setEndOfLine === 'number' ? TypeConverters.EndOfLine.from(editData.setEndOfLine) : undefined,
-        // undoStopBefore: editData.undoStopBefore,
-        // undoStopAfter: editData.undoStopAfter
-        // });
+        this._editor.getModel().pushEditOperations(this._editor.getSelections(), edits,
+            (): _Selection[] => {
+                return [];
+            })
     }
 
     // insertSnippet(snippet: SnippetString, where?: Position | readonly Position[] | Range | readonly Range[], options: { undoStopBefore: boolean; undoStopAfter: boolean; } = {
@@ -355,11 +346,17 @@ export class TextEditor {
     // setDecorations(decorationType: TextEditorDecorationType, rangesOrOptions: Range[] | DecorationOptions[]): void {
     //     throw new Error("Not implemented")
     // }
+
+    applyEdit(edit: WorkspaceEdit, newSelections: Selection[]) {
+        this._editor.getModel().pushEditOperations(this._editor.getSelections(), TypeConverters.WorkspaceEdit.from(edit),
+            (): _Selection[] => {
+                return newSelections.map(s => TypeConverters.Selection.from(s));
+            })
+    }
 }
 
-
 export interface ITextEditOperation {
-    range: vscode.Range;
+    range: Range;
     text: string | null;
     forceMoveMarkers: boolean;
 }

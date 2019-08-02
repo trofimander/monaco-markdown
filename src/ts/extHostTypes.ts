@@ -1,6 +1,14 @@
 import {illegalArgument} from "./errors";
 import {Uri} from "monaco-editor";
 
+// export function values<V = any>(set: Set<V>): V[];
+// export function values<K = any, V = any>(map: Map<K, V>): V[];
+export function values<V>(forEachable: { forEach(callback: (value: V, ...more: any[]) => any): void }): V[] {
+    const result: V[] = [];
+    forEachable.forEach(value => result.push(value));
+    return result;
+}
+
 export class Position {
 
     static Min(...positions: Position[]): Position {
@@ -548,20 +556,18 @@ export class WorkspaceEdit {
     }
 
     entries(): [Uri, TextEdit[]][] {
-        // const textEdits = new Map<string, [Uri, TextEdit[]]>();
-        // for (let candidate of this._edits) {
-        //     if (candidate._type === 2) {
-        //         let textEdit = textEdits.get(candidate.uri.toString());
-        //         if (!textEdit) {
-        //             textEdit = [candidate.uri, []];
-        //             textEdits.set(candidate.uri.toString(), textEdit);
-        //         }
-        //         textEdit[1].push(candidate.edit);
-        //     }
-        // }
-        // return values(textEdits);
-
-        throw new Error("Not implemented")
+        const textEdits = new Map<string, [Uri, TextEdit[]]>();
+        for (let candidate of this._edits) {
+            if (candidate._type === 2) {
+                let textEdit = textEdits.get(candidate.uri.toString());
+                if (!textEdit) {
+                    textEdit = [candidate.uri, []];
+                    textEdits.set(candidate.uri.toString(), textEdit);
+                }
+                textEdit[1].push(candidate.edit);
+            }
+        }
+        return values(textEdits);
     }
 
     _allEntries(): ([Uri, TextEdit[]] | [Uri?, Uri?, IFileOperationOptions?])[] {

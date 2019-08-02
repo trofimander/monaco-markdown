@@ -1,4 +1,4 @@
-import {editor, Range as _Range, Position as _Position, IRange, ISelection, IPosition} from "monaco-editor";
+import {editor, Range as _Range, Position as _Position, IRange, Selection as _Selection, IPosition} from "monaco-editor";
 
 import * as vscode from "./extHostTypes";
 
@@ -19,21 +19,20 @@ export interface SelectionLike extends RangeLike {
 
 export namespace Selection {
 
-    export function to(selection: ISelection): vscode.Selection {
+    export function to(selection: _Selection): vscode.Selection {
         const {selectionStartLineNumber, selectionStartColumn, positionLineNumber, positionColumn} = selection;
         const start = new vscode.Position(selectionStartLineNumber - 1, selectionStartColumn - 1);
         const end = new vscode.Position(positionLineNumber - 1, positionColumn - 1);
         return new vscode.Selection(start, end);
     }
 
-    export function from(selection: SelectionLike): ISelection {
+    export function from(selection: SelectionLike): _Selection {
         const {anchor, active} = selection;
-        return {
-            selectionStartLineNumber: anchor.line + 1,
-            selectionStartColumn: anchor.character + 1,
-            positionLineNumber: active.line + 1,
-            positionColumn: active.character + 1
-        };
+        return new _Selection(
+            anchor.line + 1,
+            anchor.character + 1,
+            active.line + 1,
+            active.character + 1);
     }
 }
 export namespace Range {
@@ -93,5 +92,29 @@ export namespace EndOfLine {
             return vscode.EndOfLine.LF;
         }
         return undefined;
+    }
+}
+
+export namespace WorkspaceEdit {
+    export function from(value: vscode.WorkspaceEdit): editor.IIdentifiedSingleEditOperation[] {
+        let edits: editor.IIdentifiedSingleEditOperation[] = []
+        for (const entry of value._allEntries()) {
+            const [uri, uriOrEdits] = entry;
+            if (Array.isArray(uriOrEdits)) {
+                // text edits
+
+                for (const e of uriOrEdits) {
+                    edits.push({
+                        range: Range.from(e.range),
+                        text: e.newText,
+                        forceMoveMarkers: false
+                    });
+                }
+            } else {
+                // resource edits
+                throw new Error("Not implemented for " + uri)
+            }
+        }
+        return edits;
     }
 }

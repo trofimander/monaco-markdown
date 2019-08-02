@@ -1,6 +1,10 @@
 'use strict';
 
-import {editor, KeyCode, KeyMod, Position, Range, Selection,} from 'monaco-editor';
+import {editor, KeyCode, KeyMod} from 'monaco-editor';
+
+// import { fixMarker } from './listEditing';
+import {TextEditor} from "./vscode-monaco";
+import {Position, Selection, Range, WorkspaceEdit} from "./extHostTypes";
 
 function addKeybinding(editor: editor.IStandaloneCodeEditor, fun: CallableFunction, keybindings: number[], label: string) {
     editor.addAction({
@@ -12,14 +16,13 @@ function addKeybinding(editor: editor.IStandaloneCodeEditor, fun: CallableFuncti
         label: label,
         precondition: "",
         run(editor: editor.ICodeEditor): void | Promise<void> {
-            fun(editor)
+            fun(new TextEditor(editor))
             return undefined;
         }
     });
 }
 
 export function activateFormatting(editor: editor.IStandaloneCodeEditor) {
-    console.log("Activating markdown formatting extension")
     addKeybinding(editor, toggleBold, [KeyMod.CtrlCmd | KeyCode.KEY_B], "Toggle bold");
     addKeybinding(editor, toggleItalic, [KeyMod.CtrlCmd | KeyCode.KEY_I], "Toggle italic");
     addKeybinding(editor, toggleCodeSpan, [KeyMod.CtrlCmd | KeyCode.US_BACKTICK], "Toggle code span");
@@ -39,67 +42,49 @@ const singleLinkRegex: RegExp = createLinkRegex();
 
 // Return Promise because need to chain operations in unit tests
 
-function toggleBold(editor: editor.ICodeEditor) {
+function toggleBold(editor: TextEditor) {
     return styleByWrapping(editor, '**');
 }
 
-function toggleItalic(editor: editor.ICodeEditor) {
+function toggleItalic(editor: TextEditor) {
+    // let indicator = workspace.getConfiguration('markdown.extension.italic').get<string>('indicator');
     return styleByWrapping(editor, '*');
 }
 
-function toggleCodeSpan(editor: editor.ICodeEditor) {
+function toggleCodeSpan(editor: TextEditor) {
     return styleByWrapping(editor, '`');
 }
 
-function toggleStrikethrough(editor: editor.ICodeEditor) {
+function toggleStrikethrough(editor: TextEditor) {
     return styleByWrapping(editor, '~~');
 }
 
-function toggleHeadingUp(editor: editor.ICodeEditor) {
-    let selection = editor.getSelection();
-    let model = editor.getModel();
+function toggleHeadingUp(editor: TextEditor) {
+    let lineIndex = editor.selection.active.line;
+    let lineText = editor.document.lineAt(lineIndex).text;
 
-    let lineIndex = selection.positionLineNumber;
-
-    let lineText = model.getLineContent(lineIndex);
-
-    let text;
-
-    if (!lineText.startsWith('#')) { // Not a heading
-        text = '# '
-    } else if (!lineText.startsWith('######')) { // Already a heading (but not level 6)
-        text = '#'
-    } else text = undefined;
-
-    if (text) {
-        return model.pushEditOperations([selection],
-            [{range: new Range(lineIndex, 0, lineIndex, 0), text: text}],
-            (): Selection[] => {
-                return [];
-            })
-    }
+    return editor.edit((editBuilder) => {
+        if (!lineText.startsWith('#')) { // Not a heading
+            editBuilder.insert(new Position(lineIndex, 0), '# ');
+        } else if (!lineText.startsWith('######')) { // Already a heading (but not level 6)
+            editBuilder.insert(new Position(lineIndex, 0), '#');
+        }
+    });
 }
 
-function toggleHeadingDown(editor: editor.ICodeEditor) {
-    let selection = editor.getSelection();
-    let lineIndex = selection.getPosition().lineNumber;
-    let lineText = editor.getModel().getLineContent(lineIndex);
+function toggleHeadingDown(editor: TextEditor) {
+    let lineIndex = editor.selection.active.line;
+    let lineText = editor.document.lineAt(lineIndex).text;
 
-    let edits = []
-
-    if (lineText.startsWith('# ')) { // Heading level 1
-        edits.push({range: Range.fromPositions(new Position(lineIndex, 0), new Position(lineIndex, 3)), text: ''});
-    } else if (lineText.startsWith('#')) { // Heading (but not level 1)
-        edits.push({range: Range.fromPositions(new Position(lineIndex, 0), new Position(lineIndex, 2)), text: ''});
-    }
-
-    return editor.getModel().pushEditOperations([selection], edits,
-        (): Selection[] => {
-            return [selection];
-        })
+    editor.edit((editBuilder) => {
+        if (lineText.startsWith('# ')) { // Heading level 1
+            editBuilder.delete(new Range(new Position(lineIndex, 0), new Position(lineIndex, 2)));
+        } else if (lineText.startsWith('#')) { // Heading (but not level 1)
+            editBuilder.delete(new Range(new Position(lineIndex, 0), new Position(lineIndex, 1)));
+        }
+    });
 }
 
-//
 // enum MathBlockState {
 //     // State 1: not in any others states
 //     NONE,
@@ -114,52 +99,47 @@ function toggleHeadingDown(editor: editor.ICodeEditor) {
 //     MULTI_DISPLAYED
 // }
 //
-// function getMathState(editor: editor.ICodeEditor, cursor: Position): MathBlockState {
+// function getMathState(editor: TextEditor, cursor: Position): MathBlockState {
 //     if (getContext(editor, cursor, '$') === '$|$') {
 //         return MathBlockState.INLINE;
+//     } else if (getContext(editor, cursor, '$$ ', ' $$') === '$$ | $$') {
+//         return MathBlockState.SINGLE_DISPLAYED;
+//     } else if (
+//         editor.document.lineAt(cursor.line).text === ''
+//         && cursor.line > 0
+//         && editor.document.lineAt(cursor.line - 1).text === '$$'
+//         && cursor.line < editor.document.lineCount - 1
+//         && editor.document.lineAt(cursor.line + 1).text === '$$'
+//     ) {
+//         return MathBlockState.MULTI_DISPLAYED
 //     } else {
-//         let model = editor.getModel();
-//         if (getContext(editor, cursor, '$$ ', ' $$') === '$$ | $$') {
-//             return MathBlockState.SINGLE_DISPLAYED;
-//         } else if (
-//             //@ts-ignore
-//             model != null &&
-//             model.getLineContent(cursor.lineNumber) === ''
-//             && cursor.lineNumber > 0
-//             && model.getLineContent(cursor.lineNumber - 1) === '$$'
-//             && cursor.lineNumber < model.getLineCount() - 1
-//             && model.getLineContent(cursor.lineNumber + 1) === '$$'
-//         ) {
-//             return MathBlockState.MULTI_DISPLAYED
-//         } else {
-//             return MathBlockState.NONE;
-//         }
+//         return MathBlockState.NONE;
 //     }
 // }
 //
-/**
- * Modify the document, change from `oldMathBlockState` to `newMathBlockState`.
- * @param editor
- * @param cursor
- * @param oldMathBlockState
- * @param newMathBlockState
- */
-// function setMathState(editor: editor.ICodeEditor, cursor: Position, oldMathBlockState: MathBlockState, newMathBlockState: MathBlockState) {
+// /**
+//  * Modify the document, change from `oldMathBlockState` to `newMathBlockState`.
+//  * @param editor
+//  * @param cursor
+//  * @param oldMathBlockState
+//  * @param newMathBlockState
+//  */
+// function setMathState(editor: TextEditor, cursor: Position, oldMathBlockState: MathBlockState, newMathBlockState: MathBlockState) {
 //     // Step 1: Delete old math block.
 //     editor.edit(editBuilder => {
 //         let rangeToBeDeleted: Range
 //         switch (oldMathBlockState) {
 //             case MathBlockState.NONE:
-//                 rangeToBeDeleted = Range.fromPositions(cursor, cursor);
+//                 rangeToBeDeleted = new Range(cursor, cursor);
 //                 break;
 //             case MathBlockState.INLINE:
-//                 rangeToBeDeleted = Range.fromPositions(new Position(cursor.lineNumber, cursor.column - 1), new Position(cursor.lineNumber, cursor.column + 1));
+//                 rangeToBeDeleted = new Range(new Position(cursor.line, cursor.character - 1), new Position(cursor.line, cursor.character + 1));
 //                 break;
 //             case MathBlockState.SINGLE_DISPLAYED:
-//                 rangeToBeDeleted = Range.fromPositions(new Position(cursor.lineNumber, cursor.column - 3), new Position(cursor.lineNumber, cursor.column + 3));
+//                 rangeToBeDeleted = new Range(new Position(cursor.line, cursor.character - 3), new Position(cursor.line, cursor.character + 3));
 //                 break;
 //             case MathBlockState.MULTI_DISPLAYED:
-//                 rangeToBeDeleted = Range.fromPositions(new Position(cursor.lineNumber - 1, 0), new Position(cursor.lineNumber + 1, 2));
+//                 rangeToBeDeleted = new Range(new Position(cursor.line - 1, 0), new Position(cursor.line + 1, 2));
 //                 break;
 //         }
 //         editBuilder.delete(rangeToBeDeleted)
@@ -192,48 +172,41 @@ function toggleHeadingDown(editor: editor.ICodeEditor) {
 //                     newPosition = newCursor
 //                     break;
 //                 case MathBlockState.INLINE:
-//                     newPosition = newCursor.with(newCursor.lineNumber, newCursor.column - 1)
+//                     newPosition = newCursor.with(newCursor.line, newCursor.character - 1)
 //                     break;
 //                 case MathBlockState.SINGLE_DISPLAYED:
-//                     newPosition = newCursor.with(newCursor.lineNumber, newCursor.column - 3)
+//                     newPosition = newCursor.with(newCursor.line, newCursor.character - 3)
 //                     break;
 //                 case MathBlockState.MULTI_DISPLAYED:
-//                     newPosition = newCursor.with(newCursor.lineNumber - 1, 0)
+//                     newPosition = newCursor.with(newCursor.line - 1, 0)
 //                     break;
 //             }
 //             editor.selection = new Selection(newPosition, newPosition);
 //         })
 //     });
 // }
-//
+
 // const transTable = [
 //     MathBlockState.NONE,
 //     MathBlockState.INLINE,
 //     MathBlockState.MULTI_DISPLAYED,
 //     MathBlockState.SINGLE_DISPLAYED
 // ];
+
 // const reverseTransTable = new Array(...transTable).reverse();
-
-// function toggleMath(editor: editor.ICodeEditor) {
-//     return doToggleMath(editor, transTable)
-// }
 //
-// function toggleMathReverse(editor: editor.ICodeEditor) {
-//     return doToggleMath(editor, reverseTransTable)
-// }
-
-//
-// function doToggleMath(editor: editor.ICodeEditor, transTable) {
-//     if (!editor.getSelection().isEmpty) return;
-//     let cursor = editor.getSelection().getPosition();
+// function toggleMath(editor: TextEditor, transTable) {
+//     if (!editor.selection.isEmpty) return;
+//     let cursor = editor.selection.active;
 //
 //     let oldMathBlockState = getMathState(editor, cursor)
 //     let currentStateIndex = transTable.indexOf(oldMathBlockState);
 //     setMathState(editor, cursor, oldMathBlockState, transTable[(currentStateIndex + 1) % transTable.length])
 // }
-//
-// function toggleList(editor: editor.ICodeEditor) {
-//     const doc = editor.getModel();
+
+// function toggleList(editor: TextEditor) {
+//     const doc = editor.document;
+//     let batchEdit = new WorkspaceEdit();
 //
 //     editor.selections.forEach(selection => {
 //         if (selection.isEmpty) {
@@ -247,7 +220,7 @@ function toggleHeadingDown(editor: editor.ICodeEditor) {
 //
 //     return workspace.applyEdit(batchEdit).then(() => fixMarker());
 // }
-//
+
 // function toggleListSingleLine(doc: TextDocument, line: number, wsEdit: WorkspaceEdit) {
 //     const lineText = doc.lineAt(line).text;
 //     const indentation = lineText.trim().length === 0 ? lineText.length : lineText.indexOf(lineText.trim());
@@ -274,17 +247,17 @@ function toggleHeadingDown(editor: editor.ICodeEditor) {
 //     if (selection.isSingleLine && !isSingleLink(editor.document.getText(selection))) {
 //         const text = await env.clipboard.readText();
 //         if (isSingleLink(text)) {
-//             return commands.executeCommand("editor.action.insertSnippet", {"snippet": `[$TM_SELECTED_TEXT$0](${text})`});
+//             return commands.executeCommand("editor.action.insertSnippet", { "snippet": `[$TM_SELECTED_TEXT$0](${text})` });
 //         }
 //     }
 //     return commands.executeCommand("editor.action.clipboardPasteAction");
 // }
-//
-// /**
-//  * Creates Regexp to check if the text is a link (further detailes in the isSingleLink() documentation).
-//  *
-//  * @return Regexp
-//  */
+
+/**
+ * Creates Regexp to check if the text is a link (further detailes in the isSingleLink() documentation).
+ *
+ * @return Regexp
+ */
 function createLinkRegex(): RegExp {
     // unicode letters range(must not be a raw string)
     const ul = '\\u00a1-\\uffff';
@@ -333,76 +306,55 @@ export function isSingleLink(text: string): boolean {
     return singleLinkRegex.test(text);
 }
 
-function styleByWrapping(editor: editor.ICodeEditor, startPattern: string, endPattern?: string) {
+function styleByWrapping(editor: TextEditor, startPattern: string, endPattern?: string) {
     if (endPattern == undefined) {
         endPattern = startPattern;
     }
-    let selections = editor.getSelections();
-    let model = editor.getModel();
 
+    let selections = editor.selections;
 
-    if (selections != null && model != null) {
-        let edits: editor.IIdentifiedSingleEditOperation[] = [];
-        let shifts: [Position, number][] = [];
-        let newSelections: Selection[] = selections.slice();
+    let batchEdit = new WorkspaceEdit();
+    let shifts: [Position, number][] = [];
+    let newSelections: Selection[] = selections.slice();
 
-        selections.forEach((selection: Selection, i: number) => {
-            if (model != null) {
+    selections.forEach((selection, i) => {
 
-                let cursorPos = selection.getPosition();
-                const shift = shifts.map(([pos, s]) => (selection.getStartPosition().lineNumber == pos.lineNumber && selection.getStartPosition().column >= pos.column) ? s : 0)
-                    .reduce((a, b) => a + b, 0);
+        let cursorPos = selection.active;
+        const shift = shifts.map(([pos, s]) => (selection.start.line == pos.line && selection.start.character >= pos.character) ? s : 0)
+            .reduce((a, b) => a + b, 0);
 
-                if (selection.isEmpty) {
-                    // No selected text
-                    if (startPattern !== '~~' && getContext(editor, cursorPos, startPattern) === `${startPattern}text|${endPattern}`) {
-                        // `**text|**` to `**text**|`
-                        // @ts-ignore
-                        let newCursorPos = cursorPos.with(undefined, cursorPos.column + shift + endPattern.length);
-                        newSelections[i] = Selection.fromPositions(newCursorPos, newCursorPos);
-                        return;
-                    } else if (getContext(editor, cursorPos, startPattern) === `${startPattern}|${endPattern}`) {
-                        // `**|**` to `|`
-                        let start = cursorPos.with(undefined, cursorPos.column - startPattern.length);
-                        // @ts-ignore
-                        let end = cursorPos.with(undefined, cursorPos.column + endPattern.length);
-                        wrapRange(editor, shifts, newSelections, i, shift, cursorPos, Range.fromPositions(start, end), false, startPattern);
-                    } else {
-                        let l = cursorPos.lineNumber;
-                        // Select word under cursor
-                        let word = model.getWordAtPosition(cursorPos);
-
-                        let wordRange = word == undefined ?
-                            selection :
-                            new Range(l, word.startColumn, l, word.endColumn)
-
-                        // One special case: toggle strikethrough in task list
-
-                        const currentText = model.getLineContent(l);
-                        const currentTextRange = new Range(l, model.getLineMinColumn(l), l, model.getLineMaxColumn(l));
-                        let regExp = /^\s*[\*\+\-] (\[[ x]\] )? */g;
-
-                        if (startPattern === '~~' && regExp.test(currentText)) {
-                            // @ts-ignore
-                            wordRange = currentTextRange.setStartPosition(l, currentText.match(regExp)[0].length);
-                        }
-                        edits = edits.concat(wrapRange(editor, shifts, newSelections, i, shift, cursorPos, wordRange, false, startPattern));
-                    }
-                } else {
-                    // Text selected
-                    wrapRange(editor, shifts, newSelections, i, shift, cursorPos, selection, true, startPattern);
+        if (selection.isEmpty) {
+            // No selected text
+            if (startPattern !== '~~' && getContext(editor, cursorPos, startPattern) === `${startPattern}text|${endPattern}`) {
+                // `**text|**` to `**text**|`
+                let newCursorPos = cursorPos.with({character: cursorPos.character + shift + endPattern.length});
+                newSelections[i] = new Selection(newCursorPos, newCursorPos);
+                return;
+            } else if (getContext(editor, cursorPos, startPattern) === `${startPattern}|${endPattern}`) {
+                // `**|**` to `|`
+                let start = cursorPos.with({character: cursorPos.character - startPattern.length});
+                let end = cursorPos.with({character: cursorPos.character + endPattern.length});
+                wrapRange(editor, batchEdit, shifts, newSelections, i, shift, cursorPos, new Range(start, end), false, startPattern);
+            } else {
+                // Select word under cursor
+                let wordRange = editor.document.getWordRangeAtPosition(cursorPos);
+                if (wordRange == undefined) {
+                    wordRange = selection;
                 }
+                // One special case: toggle strikethrough in task list
+                const currentTextLine = editor.document.lineAt(cursorPos.line);
+                if (startPattern === '~~' && /^\s*[\*\+\-] (\[[ x]\] )? */g.test(currentTextLine.text)) {
+                    wordRange = currentTextLine.range.with(new Position(cursorPos.line, currentTextLine.text.match(/^\s*[\*\+\-] (\[[ x]\] )? */g)[0].length));
+                }
+                wrapRange(editor, batchEdit, shifts, newSelections, i, shift, cursorPos, wordRange, false, startPattern);
             }
-        });
+        } else {
+            // Text selected
+            wrapRange(editor, batchEdit, shifts, newSelections, i, shift, cursorPos, selection, true, startPattern);
+        }
+    });
 
-
-        return model.pushEditOperations(selections, edits,
-            (): Selection[] => {
-                return newSelections;
-            })
-    }
-
-    return []
+    editor.applyEdit(batchEdit, newSelections)
 }
 
 /**
@@ -415,77 +367,68 @@ function styleByWrapping(editor: editor.ICodeEditor, startPattern: string, endPa
  * @param startPtn
  * @param endPtn
  */
-function wrapRange(editor: editor.ICodeEditor, shifts: [Position, number][], newSelections: Selection[], i: number, shift: number,
-                   cursor: Position, range: Range, isSelected: boolean, startPtn: string, endPtn?: string): editor.IIdentifiedSingleEditOperation[] {
+function wrapRange(editor: TextEditor, wsEdit: WorkspaceEdit, shifts: [Position, number][], newSelections: Selection[], i: number, shift: number, cursor: Position, range: Range, isSelected: boolean, startPtn: string, endPtn?: string) {
     if (endPtn == undefined) {
         endPtn = startPtn;
     }
 
-    let edits: editor.IIdentifiedSingleEditOperation[] = []
-
-    let model = editor.getModel();
-    if (!model) {
-        return edits;
-    }
-
-    let text = model.getValueInRange(range);
+    let text = editor.document.getText(range);
     const prevSelection = newSelections[i];
     const ptnLength = (startPtn + endPtn).length;
 
-    let newCursorPos = cursor.with(undefined, cursor.column + shift);
+    let newCursorPos = cursor.with({character: cursor.character + shift});
     let newSelection: Selection;
     if (isWrapped(text, startPtn)) {
         // remove start/end patterns from range
-        edits.push({range: range, text: text.substr(startPtn.length, text.length - ptnLength)})
+        wsEdit.replace(editor.document.uri, range, text.substr(startPtn.length, text.length - ptnLength));
 
-        shifts.push([range.getEndPosition(), -ptnLength]);
+        shifts.push([range.end, -ptnLength]);
 
         // Fix cursor position
         if (!isSelected) {
             if (!range.isEmpty) { // means quick styling
-                if (cursor.column == range.getEndPosition().column) {
-                    newCursorPos = cursor.with(undefined, cursor.column + shift - ptnLength);
+                if (cursor.character == range.end.character) {
+                    newCursorPos = cursor.with({character: cursor.character + shift - ptnLength});
                 } else {
-                    newCursorPos = cursor.with(undefined, cursor.column + shift - startPtn.length);
+                    newCursorPos = cursor.with({character: cursor.character + shift - startPtn.length});
                 }
             } else { // means `**|**` -> `|`
-                newCursorPos = cursor.with(undefined, cursor.column + shift + startPtn.length);
+                newCursorPos = cursor.with({character: cursor.character + shift + startPtn.length});
             }
-            newSelection = Selection.fromPositions(newCursorPos, newCursorPos);
+            newSelection = new Selection(newCursorPos, newCursorPos);
         } else {
-            newSelection = Selection.fromPositions(
-                prevSelection.getStartPosition().with(undefined, prevSelection.getStartPosition().column + shift),
-                prevSelection.getEndPosition().with(undefined, prevSelection.getEndPosition().column + shift - ptnLength)
+            newSelection = new Selection(
+                prevSelection.start.with({character: prevSelection.start.character + shift}),
+                prevSelection.end.with({character: prevSelection.end.character + shift - ptnLength})
             );
         }
     } else {
         // add start/end patterns around range
-        edits.push({range: range, text: startPtn + text + endPtn});
+        wsEdit.replace(editor.document.uri, range, startPtn + text + endPtn);
 
-        shifts.push([range.getEndPosition(), ptnLength]);
+        shifts.push([range.end, ptnLength]);
 
         // Fix cursor position
         if (!isSelected) {
             if (!range.isEmpty) { // means quick styling
-                if (cursor.column == range.getEndPosition().column) {
-                    newCursorPos = cursor.with(undefined, cursor.column + shift + ptnLength);
+                if (cursor.character == range.end.character) {
+                    newCursorPos = cursor.with({character: cursor.character + shift + ptnLength});
                 } else {
-                    newCursorPos = cursor.with(undefined, cursor.column + shift + startPtn.length);
+                    newCursorPos = cursor.with({character: cursor.character + shift + startPtn.length});
                 }
             } else { // means `|` -> `**|**`
-                newCursorPos = cursor.with(undefined, cursor.column + shift + startPtn.length);
+                newCursorPos = cursor.with({character: cursor.character + shift + startPtn.length});
             }
-            newSelection = Selection.fromPositions(newCursorPos, newCursorPos);
+            newSelection = new Selection(newCursorPos, newCursorPos);
         } else {
-            newSelection = Selection.fromPositions(
-                prevSelection.getStartPosition().with(undefined, prevSelection.getStartPosition().column + shift),
-                prevSelection.getEndPosition().with(undefined, prevSelection.getEndPosition().column + shift + ptnLength)
+            newSelection = new Selection(
+                prevSelection.start.with({character: prevSelection.start.character + shift}),
+                prevSelection.end.with({character: prevSelection.end.character + shift + ptnLength})
             );
         }
     }
 
     newSelections[i] = newSelection;
-    return edits;
 }
 
 function isWrapped(text: string, startPattern: string, endPattern?: string): boolean {
@@ -495,31 +438,27 @@ function isWrapped(text: string, startPattern: string, endPattern?: string): boo
     return text.startsWith(startPattern) && text.endsWith(endPattern);
 }
 
-function getContext(editor: editor.ICodeEditor, cursorPos: Position, startPattern: string, endPattern?: string): string {
+function getContext(editor: TextEditor, cursorPos: Position, startPattern: string, endPattern?: string): string {
     if (endPattern == undefined) {
         endPattern = startPattern;
     }
 
-    let startPositionColumn = cursorPos.column - startPattern.length;
-    let endPositionColumn = cursorPos.column + endPattern.length;
+    let startPositionCharacter = cursorPos.character - startPattern.length;
+    let endPositionCharacter = cursorPos.character + endPattern.length;
 
-    if (startPositionColumn < 0) {
-        startPositionColumn = 0;
+    if (startPositionCharacter < 0) {
+        startPositionCharacter = 0;
     }
 
-    let model = editor.getModel();
-    if (model != null) {
-        let leftText = model.getValueInRange(new Range(cursorPos.lineNumber, startPositionColumn, cursorPos.lineNumber, cursorPos.column));
-        let rightText = model.getValueInRange(new Range(cursorPos.lineNumber, cursorPos.column, cursorPos.lineNumber, endPositionColumn));
+    let leftText = editor.document.getText(new Range(cursorPos.line, startPositionCharacter, cursorPos.line, cursorPos.character));
+    let rightText = editor.document.getText(new Range(cursorPos.line, cursorPos.character, cursorPos.line, endPositionCharacter));
 
-        if (rightText == endPattern) {
-            if (leftText == startPattern) {
-                return `${startPattern}|${endPattern}`;
-            } else {
-                return `${startPattern}text|${endPattern}`;
-            }
+    if (rightText == endPattern) {
+        if (leftText == startPattern) {
+            return `${startPattern}|${endPattern}`;
+        } else {
+            return `${startPattern}text|${endPattern}`;
         }
     }
-
     return '|';
 }
