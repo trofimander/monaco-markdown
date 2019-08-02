@@ -226,9 +226,8 @@ function toggleList(editor: TextEditor) {
         }
     });
 
-    editor.applyEdit(batchEdit, []);
-
-    // fixMarker()
+    return editor.applyEdit(batchEdit, [])
+        // .then(() => fixMarker());
 }
 
 function toggleListSingleLine(doc: TextDocument, line: number, wsEdit: WorkspaceEdit) {
@@ -363,7 +362,7 @@ function styleByWrapping(editor: TextEditor, startPattern: string, endPattern?: 
         }
     });
 
-    editor.applyEdit(batchEdit, newSelections)
+    return editor.applyEdit(batchEdit, newSelections)
 }
 
 /**

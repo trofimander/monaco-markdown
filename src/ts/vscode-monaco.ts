@@ -355,11 +355,13 @@ export class TextEditor {
     //     throw new Error("Not implemented")
     // }
 
-    applyEdit(edit: WorkspaceEdit, newSelections: Selection[]) {
+    applyEdit(edit: WorkspaceEdit, newSelections: Selection[]): Thenable<boolean> {
         this._editor.getModel().pushEditOperations(this._editor.getSelections(), TypeConverters.WorkspaceEdit.from(edit),
             (): _Selection[] => {
                 return newSelections.map(s => TypeConverters.Selection.from(s));
             })
+
+        return Promise.resolve(true)
     }
 }
 
