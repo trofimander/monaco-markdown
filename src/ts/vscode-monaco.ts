@@ -249,6 +249,10 @@ export class TextEditor {
         return TypeConverters.Selection.to(this._editor.getSelection())
     }
 
+    set selection(value: Selection) {
+        this._editor.setSelection(TypeConverters.Selection.from(value))
+    }
+
     get selections(): Selection[] {
         return this._editor.getSelections().map(s => TypeConverters.Selection.to(s))
     }
@@ -324,6 +328,8 @@ export class TextEditor {
             (): _Selection[] => {
                 return [];
             })
+
+        return Promise.resolve(true)
     }
 
     // insertSnippet(snippet: SnippetString, where?: Position | readonly Position[] | Range | readonly Range[], options: { undoStopBefore: boolean; undoStopAfter: boolean; } = {

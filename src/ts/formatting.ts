@@ -3,7 +3,7 @@
 import {editor, KeyCode, KeyMod} from 'monaco-editor';
 
 // import { fixMarker } from './listEditing';
-import {TextEditor} from "./vscode-monaco";
+import {TextDocument, TextEditor} from "./vscode-monaco";
 import {Position, Selection, Range, WorkspaceEdit} from "./extHostTypes";
 
 function addKeybinding(editor: editor.IStandaloneCodeEditor, fun: CallableFunction, keybindings: number[], label: string) {
@@ -27,11 +27,11 @@ export function activateFormatting(editor: editor.IStandaloneCodeEditor) {
     addKeybinding(editor, toggleItalic, [KeyMod.CtrlCmd | KeyCode.KEY_I], "Toggle italic");
     addKeybinding(editor, toggleCodeSpan, [KeyMod.CtrlCmd | KeyCode.US_BACKTICK], "Toggle code span");
     addKeybinding(editor, toggleStrikethrough, [KeyMod.Alt | KeyCode.KEY_S], "Toggle strikethrough");
-    // addKeybinding(editor, toggleMath, [KeyMod.CtrlCmd | KeyCode.KEY_B], "Toggle bold");
-    // addKeybinding(editor, toggleMathReverse, [KeyMod.CtrlCmd | KeyCode.KEY_B], "Toggle bold");
+    addKeybinding(editor, toggleMath, [KeyMod.CtrlCmd | KeyCode.KEY_M], "Toggle math");
+    addKeybinding(editor, toggleMathReverse, [KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KEY_M], "Toggle math reverse");
     addKeybinding(editor, toggleHeadingUp, [KeyMod.WinCtrl | KeyMod.Shift | KeyCode.US_CLOSE_SQUARE_BRACKET], "Heading up");
     addKeybinding(editor, toggleHeadingDown, [KeyMod.WinCtrl | KeyMod.Shift | KeyCode.US_OPEN_SQUARE_BRACKET], "Heading down");
-    // addKeybinding(editor, toggleList, [KeyMod.CtrlCmd | KeyCode.KEY_B], "Toggle bold");
+    addKeybinding(editor, toggleList, [KeyMod.CtrlCmd | KeyCode.KEY_L], "Toggle list");
     // addKeybinding(editor, paste, [KeyMod.CtrlCmd | KeyCode.KEY_B], "Toggle bold");
 }
 
@@ -85,161 +85,171 @@ function toggleHeadingDown(editor: TextEditor) {
     });
 }
 
-// enum MathBlockState {
-//     // State 1: not in any others states
-//     NONE,
-//     // State 2: $|$
-//     INLINE,
-//     // State 3: $$ | $$
-//     SINGLE_DISPLAYED,
-//     // State 4:
-//     // $$
-//     // |
-//     // $$
-//     MULTI_DISPLAYED
-// }
-//
-// function getMathState(editor: TextEditor, cursor: Position): MathBlockState {
-//     if (getContext(editor, cursor, '$') === '$|$') {
-//         return MathBlockState.INLINE;
-//     } else if (getContext(editor, cursor, '$$ ', ' $$') === '$$ | $$') {
-//         return MathBlockState.SINGLE_DISPLAYED;
-//     } else if (
-//         editor.document.lineAt(cursor.line).text === ''
-//         && cursor.line > 0
-//         && editor.document.lineAt(cursor.line - 1).text === '$$'
-//         && cursor.line < editor.document.lineCount - 1
-//         && editor.document.lineAt(cursor.line + 1).text === '$$'
-//     ) {
-//         return MathBlockState.MULTI_DISPLAYED
-//     } else {
-//         return MathBlockState.NONE;
-//     }
-// }
-//
-// /**
-//  * Modify the document, change from `oldMathBlockState` to `newMathBlockState`.
-//  * @param editor
-//  * @param cursor
-//  * @param oldMathBlockState
-//  * @param newMathBlockState
-//  */
-// function setMathState(editor: TextEditor, cursor: Position, oldMathBlockState: MathBlockState, newMathBlockState: MathBlockState) {
-//     // Step 1: Delete old math block.
-//     editor.edit(editBuilder => {
-//         let rangeToBeDeleted: Range
-//         switch (oldMathBlockState) {
-//             case MathBlockState.NONE:
-//                 rangeToBeDeleted = new Range(cursor, cursor);
-//                 break;
-//             case MathBlockState.INLINE:
-//                 rangeToBeDeleted = new Range(new Position(cursor.line, cursor.character - 1), new Position(cursor.line, cursor.character + 1));
-//                 break;
-//             case MathBlockState.SINGLE_DISPLAYED:
-//                 rangeToBeDeleted = new Range(new Position(cursor.line, cursor.character - 3), new Position(cursor.line, cursor.character + 3));
-//                 break;
-//             case MathBlockState.MULTI_DISPLAYED:
-//                 rangeToBeDeleted = new Range(new Position(cursor.line - 1, 0), new Position(cursor.line + 1, 2));
-//                 break;
-//         }
-//         editBuilder.delete(rangeToBeDeleted)
-//     }).then(() => {
-//         // Step 2: Insert new math block.
-//         editor.edit(editBuilder => {
-//             let newCursor = editor.selection.active;
-//             let stringToBeInserted: string
-//             switch (newMathBlockState) {
-//                 case MathBlockState.NONE:
-//                     stringToBeInserted = ''
-//                     break;
-//                 case MathBlockState.INLINE:
-//                     stringToBeInserted = '$$'
-//                     break;
-//                 case MathBlockState.SINGLE_DISPLAYED:
-//                     stringToBeInserted = '$$  $$'
-//                     break;
-//                 case MathBlockState.MULTI_DISPLAYED:
-//                     stringToBeInserted = '$$\n\n$$'
-//                     break;
-//             }
-//             editBuilder.insert(newCursor, stringToBeInserted);
-//         }).then(() => {
-//             // Step 3: Move cursor to the middle.
-//             let newCursor = editor.selection.active;
-//             let newPosition: Position;
-//             switch (newMathBlockState) {
-//                 case MathBlockState.NONE:
-//                     newPosition = newCursor
-//                     break;
-//                 case MathBlockState.INLINE:
-//                     newPosition = newCursor.with(newCursor.line, newCursor.character - 1)
-//                     break;
-//                 case MathBlockState.SINGLE_DISPLAYED:
-//                     newPosition = newCursor.with(newCursor.line, newCursor.character - 3)
-//                     break;
-//                 case MathBlockState.MULTI_DISPLAYED:
-//                     newPosition = newCursor.with(newCursor.line - 1, 0)
-//                     break;
-//             }
-//             editor.selection = new Selection(newPosition, newPosition);
-//         })
-//     });
-// }
+enum MathBlockState {
+    // State 1: not in any others states
+    NONE,
+    // State 2: $|$
+    INLINE,
+    // State 3: $$ | $$
+    SINGLE_DISPLAYED,
+    // State 4:
+    // $$
+    // |
+    // $$
+    MULTI_DISPLAYED
+}
 
-// const transTable = [
-//     MathBlockState.NONE,
-//     MathBlockState.INLINE,
-//     MathBlockState.MULTI_DISPLAYED,
-//     MathBlockState.SINGLE_DISPLAYED
-// ];
+function getMathState(editor: TextEditor, cursor: Position): MathBlockState {
+    if (getContext(editor, cursor, '$') === '$|$') {
+        return MathBlockState.INLINE;
+    } else if (getContext(editor, cursor, '$$ ', ' $$') === '$$ | $$') {
+        return MathBlockState.SINGLE_DISPLAYED;
+    } else if (
+        editor.document.lineAt(cursor.line).text === ''
+        && cursor.line > 0
+        && editor.document.lineAt(cursor.line - 1).text === '$$'
+        && cursor.line < editor.document.lineCount - 1
+        && editor.document.lineAt(cursor.line + 1).text === '$$'
+    ) {
+        return MathBlockState.MULTI_DISPLAYED
+    } else {
+        return MathBlockState.NONE;
+    }
+}
 
-// const reverseTransTable = new Array(...transTable).reverse();
-//
-// function toggleMath(editor: TextEditor, transTable) {
-//     if (!editor.selection.isEmpty) return;
-//     let cursor = editor.selection.active;
-//
-//     let oldMathBlockState = getMathState(editor, cursor)
-//     let currentStateIndex = transTable.indexOf(oldMathBlockState);
-//     setMathState(editor, cursor, oldMathBlockState, transTable[(currentStateIndex + 1) % transTable.length])
-// }
+/**
+ * Modify the document, change from `oldMathBlockState` to `newMathBlockState`.
+ * @param editor
+ * @param cursor
+ * @param oldMathBlockState
+ * @param newMathBlockState
+ */
+function setMathState(editor: TextEditor, cursor: Position, oldMathBlockState: MathBlockState, newMathBlockState: MathBlockState) {
+    // Step 1: Delete old math block.
+    editor.edit(editBuilder => {
+        let rangeToBeDeleted: Range
+        switch (oldMathBlockState) {
+            case MathBlockState.NONE:
+                rangeToBeDeleted = new Range(cursor, cursor);
+                break;
+            case MathBlockState.INLINE:
+                rangeToBeDeleted = new Range(new Position(cursor.line, cursor.character - 1), new Position(cursor.line, cursor.character + 1));
+                break;
+            case MathBlockState.SINGLE_DISPLAYED:
+                rangeToBeDeleted = new Range(new Position(cursor.line, cursor.character - 3), new Position(cursor.line, cursor.character + 3));
+                break;
+            case MathBlockState.MULTI_DISPLAYED:
+                rangeToBeDeleted = new Range(new Position(cursor.line - 1, 0), new Position(cursor.line + 1, 2));
+                break;
+        }
+        editBuilder.delete(rangeToBeDeleted)
+    }).then(() => {
+        // Step 2: Insert new math block.
+        editor.edit(editBuilder => {
+            let newCursor = editor.selection.active;
+            let stringToBeInserted: string
+            switch (newMathBlockState) {
+                case MathBlockState.NONE:
+                    stringToBeInserted = ''
+                    break;
+                case MathBlockState.INLINE:
+                    stringToBeInserted = '$$'
+                    break;
+                case MathBlockState.SINGLE_DISPLAYED:
+                    stringToBeInserted = '$$  $$'
+                    break;
+                case MathBlockState.MULTI_DISPLAYED:
+                    stringToBeInserted = '$$\n\n$$'
+                    break;
+            }
+            editBuilder.insert(newCursor, stringToBeInserted);
+        }).then(() => {
+            // Step 3: Move cursor to the middle.
+            let newCursor = editor.selection.active;
+            let newPosition: Position;
+            switch (newMathBlockState) {
+                case MathBlockState.NONE:
+                    newPosition = newCursor
+                    break;
+                case MathBlockState.INLINE:
+                    newPosition = newCursor.with(newCursor.line, newCursor.character - 1)
+                    break;
+                case MathBlockState.SINGLE_DISPLAYED:
+                    newPosition = newCursor.with(newCursor.line, newCursor.character - 3)
+                    break;
+                case MathBlockState.MULTI_DISPLAYED:
+                    newPosition = newCursor.with(newCursor.line - 1, 0)
+                    break;
+            }
+            editor.selection = new Selection(newPosition, newPosition);
+        })
+    });
+}
 
-// function toggleList(editor: TextEditor) {
-//     const doc = editor.document;
-//     let batchEdit = new WorkspaceEdit();
-//
-//     editor.selections.forEach(selection => {
-//         if (selection.isEmpty) {
-//             toggleListSingleLine(doc, selection.active.line, batchEdit);
-//         } else {
-//             for (let i = selection.start.line; i <= selection.end.line; i++) {
-//                 toggleListSingleLine(doc, i, batchEdit);
-//             }
-//         }
-//     });
-//
-//     return workspace.applyEdit(batchEdit).then(() => fixMarker());
-// }
+const transTable = [
+    MathBlockState.NONE,
+    MathBlockState.INLINE,
+    MathBlockState.MULTI_DISPLAYED,
+    MathBlockState.SINGLE_DISPLAYED
+];
 
-// function toggleListSingleLine(doc: TextDocument, line: number, wsEdit: WorkspaceEdit) {
-//     const lineText = doc.lineAt(line).text;
-//     const indentation = lineText.trim().length === 0 ? lineText.length : lineText.indexOf(lineText.trim());
-//     const lineTextContent = lineText.substr(indentation);
-//
-//     if (lineTextContent.startsWith("- ")) {
-//         wsEdit.replace(doc.uri, new Range(line, indentation, line, indentation + 2), "* ");
-//     } else if (lineTextContent.startsWith("* ")) {
-//         wsEdit.replace(doc.uri, new Range(line, indentation, line, indentation + 2), "+ ");
-//     } else if (lineTextContent.startsWith("+ ")) {
-//         wsEdit.replace(doc.uri, new Range(line, indentation, line, indentation + 2), "1. ");
-//     } else if (/^\d\. /.test(lineTextContent)) {
-//         wsEdit.replace(doc.uri, new Range(line, indentation + 1, line, indentation + 2), ")");
-//     } else if (/^\d\) /.test(lineTextContent)) {
-//         wsEdit.delete(doc.uri, new Range(line, indentation, line, indentation + 3));
-//     } else {
-//         wsEdit.insert(doc.uri, new Position(line, indentation), "- ");
-//     }
-// }
+const reverseTransTable = new Array(...transTable).reverse();
+
+function toggleMath(editor: TextEditor) {
+    _toggleMath(editor, transTable)
+}
+
+function toggleMathReverse(editor: TextEditor) {
+    _toggleMath(editor, reverseTransTable)
+}
+
+function _toggleMath(editor: TextEditor, transTable: MathBlockState[]) {
+    if (!editor.selection.isEmpty) return;
+    let cursor = editor.selection.active;
+
+    let oldMathBlockState = getMathState(editor, cursor)
+    let currentStateIndex = transTable.indexOf(oldMathBlockState);
+    setMathState(editor, cursor, oldMathBlockState, transTable[(currentStateIndex + 1) % transTable.length])
+}
+
+function toggleList(editor: TextEditor) {
+    const doc = editor.document;
+    let batchEdit = new WorkspaceEdit();
+
+    editor.selections.forEach(selection => {
+        if (selection.isEmpty) {
+            toggleListSingleLine(doc, selection.active.line, batchEdit);
+        } else {
+            for (let i = selection.start.line; i <= selection.end.line; i++) {
+                toggleListSingleLine(doc, i, batchEdit);
+            }
+        }
+    });
+
+    editor.applyEdit(batchEdit, []);
+
+    // fixMarker()
+}
+
+function toggleListSingleLine(doc: TextDocument, line: number, wsEdit: WorkspaceEdit) {
+    const lineText = doc.lineAt(line).text;
+    const indentation = lineText.trim().length === 0 ? lineText.length : lineText.indexOf(lineText.trim());
+    const lineTextContent = lineText.substr(indentation);
+
+    if (lineTextContent.startsWith("- ")) {
+        wsEdit.replace(doc.uri, new Range(line, indentation, line, indentation + 2), "* ");
+    } else if (lineTextContent.startsWith("* ")) {
+        wsEdit.replace(doc.uri, new Range(line, indentation, line, indentation + 2), "+ ");
+    } else if (lineTextContent.startsWith("+ ")) {
+        wsEdit.replace(doc.uri, new Range(line, indentation, line, indentation + 2), "1. ");
+    } else if (/^\d\. /.test(lineTextContent)) {
+        wsEdit.replace(doc.uri, new Range(line, indentation + 1, line, indentation + 2), ")");
+    } else if (/^\d\) /.test(lineTextContent)) {
+        wsEdit.delete(doc.uri, new Range(line, indentation, line, indentation + 3));
+    } else {
+        wsEdit.insert(doc.uri, new Position(line, indentation), "- ");
+    }
+}
 
 // async function paste() {
 //     const editor = window.activeTextEditor;
