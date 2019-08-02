@@ -1,6 +1,6 @@
 // 'use strict'
 //
-// import { commands, ExtensionContext, Position, Range, Selection, TextEditor, window, workspace, WorkspaceEdit } from 'monaco-editor';
+// import { commands, ExtensionContext, Position, Range, Selection, TextEditor, window, workspace, WorkspaceEdit } from './vscode-monaco';
 // import { isInFencedCodeBlock } from './util';
 //
 // export function activate(context: ExtensionContext) {

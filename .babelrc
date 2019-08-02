@@ -12,6 +12,7 @@
     ["module-resolver", {
       "extensions": [".js", ".ts"],
       "root": ["./src/js"]
-    }]
+    }],
+    ["@babel/plugin-transform-typescript", { "allowNamespaces": true }]
   ]
 }
