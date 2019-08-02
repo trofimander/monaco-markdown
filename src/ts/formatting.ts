@@ -16,7 +16,7 @@ function addKeybinding(editor: editor.IStandaloneCodeEditor, fun: CallableFuncti
         label: label,
         precondition: "",
         run(editor: editor.ICodeEditor): void | Promise<void> {
-            fun(new TextEditor(editor))
+            fun(new TextEditor(editor, 'markdown'))
             return undefined;
         }
     });
@@ -318,7 +318,6 @@ function styleByWrapping(editor: TextEditor, startPattern: string, endPattern?: 
     let newSelections: Selection[] = selections.slice();
 
     selections.forEach((selection, i) => {
-
         let cursorPos = selection.active;
         const shift = shifts.map(([pos, s]) => (selection.start.line == pos.line && selection.start.character >= pos.character) ? s : 0)
             .reduce((a, b) => a + b, 0);

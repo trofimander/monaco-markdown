@@ -8,8 +8,6 @@ import {
 
 import {
     editor,
-    Range as _Range,
-    Position as _Position,
     Selection as _Selection,
     IRange,
     Uri,
@@ -52,6 +50,18 @@ function revealRangeInEditor(_editor: editor.ICodeEditor, range: IRange, revealT
 }
 
 export class TextDocument {
+    readonly uri: Uri;
+    readonly version: number;
+
+    readonly model: editor.ITextModel;
+
+    private _textLines: TextLine[] = [];
+
+    constructor(model: editor.ITextModel, languageId: string) {
+        this.model = model;
+        this.languageId = languageId
+    }
+
     get eol(): EndOfLine {
         switch (this.model.getEOL()) {
             case '\n': {
@@ -88,16 +98,6 @@ export class TextDocument {
         return this.model.getLineCount()
     }
 
-    readonly uri: Uri;
-    readonly version: number;
-
-    readonly model: editor.ITextModel;
-
-    private _textLines: TextLine[] = [];
-
-    constructor(model: editor.ITextModel) {
-        this.model = model;
-    }
 
     private get _lines(): string[] {
         return this.model.getLinesContent()
@@ -234,13 +234,15 @@ export class TextDocument {
 export class TextEditor {
     private _editor: editor.ICodeEditor;
     private _disposed: boolean = false;
+    private _languageId: string;
 
-    constructor(editor: editor.ICodeEditor) {
+    constructor(editor: editor.ICodeEditor, languageId: string) {
         this._editor = editor;
+        this._languageId = languageId;
     }
 
     get document(): TextDocument {
-        return new TextDocument(this._editor.getModel())
+        return new TextDocument(this._editor.getModel(), this._languageId)
     }
 
     get selection(): Selection {
