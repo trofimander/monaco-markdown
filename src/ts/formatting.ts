@@ -2,7 +2,7 @@
 
 import {editor, KeyCode, KeyMod} from 'monaco-editor';
 
-// import { fixMarker } from './listEditing';
+import { fixMarker } from './listEditing';
 import {TextDocument, TextEditor} from "./vscode-monaco";
 import {Position, Selection, Range, WorkspaceEdit} from "./extHostTypes";
 
@@ -227,7 +227,7 @@ function toggleList(editor: TextEditor) {
     });
 
     return editor.applyEdit(batchEdit, [])
-        // .then(() => fixMarker());
+        .then(() => fixMarker(editor));
 }
 
 function toggleListSingleLine(doc: TextDocument, line: number, wsEdit: WorkspaceEdit) {
