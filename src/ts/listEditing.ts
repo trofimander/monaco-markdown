@@ -16,11 +16,12 @@ function onShiftTabKey(editor: TextEditor) {
 }
 
 export function activateListEditing(editor: TextEditor) {
-    addKeybinding(editor, onEnterKey, [KeyCode.Enter], "");
-    addKeybinding(editor, onCtrlEnterKey, [KeyCode.Enter | KeyMod.CtrlCmd], "");
-    addKeybinding(editor, onShiftEnterKey, [KeyCode.Enter | KeyMod.Shift], "");
-    addKeybinding(editor, onTabKey, [KeyCode.Tab], "");
-    addKeybinding(editor, onShiftTabKey, [KeyCode.Tab | KeyMod.Shift], "");
+    let enterContext = "editorTextFocus && !editorReadonly && !suggestWidgetVisible";
+    addKeybinding(editor, onEnterKey, [KeyCode.Enter], "", enterContext);
+    addKeybinding(editor, onCtrlEnterKey, [KeyCode.Enter | KeyMod.CtrlCmd], "", enterContext);
+    addKeybinding(editor, onShiftEnterKey, [KeyCode.Enter | KeyMod.Shift], "", enterContext);
+    addKeybinding(editor, onTabKey, [KeyCode.Tab], "", enterContext);
+    addKeybinding(editor, onShiftTabKey, [KeyCode.Tab | KeyMod.Shift], "", enterContext);
     addKeybinding(editor, onBackspaceKey, [KeyCode.Backspace], "");
 
     //

@@ -6,12 +6,12 @@ import {editor, KeyCode, KeyMod} from 'monaco-editor';
 import {TextDocument, TextEditor} from "./vscode-monaco";
 import {Position, Selection, Range, WorkspaceEdit} from "./extHostTypes";
 
-export function addKeybinding(editor: TextEditor, fun: CallableFunction, keybindings: number[], label: string) {
+export function addKeybinding(editor: TextEditor, fun: CallableFunction, keybindings: number[], label: string, context?: string) {
     editor.addAction({
         contextMenuGroupId: "markdown.extension.editing",
         contextMenuOrder: 0,
         id: "markdown.extension.editing." + fun.name,
-        keybindingContext: "",
+        keybindingContext: context,
         keybindings: keybindings,
         label: label,
         precondition: "",
