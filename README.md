@@ -5,3 +5,14 @@ This is a port of [Markdown extension for VS Code](https://github.com/yzhang-gh/
  
  The initial plugin is based on the VS Code API, while this one uses only Monaco editor API. The logic
  and the functionality is pretty much the same.
+ 
+ 
+###Run demo
+
+To launch the demo web page, execute `gulp dist` (see package.json fro details)
+and then open `demo\index.html`.
+
+
+
+
+
