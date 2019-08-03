@@ -17,12 +17,12 @@ function onShiftTabKey(editor: TextEditor) {
 
 export function activateListEditing(editor: TextEditor) {
     let enterContext = "editorTextFocus && !editorReadonly && !suggestWidgetVisible";
-    addKeybinding(editor, onEnterKey, [KeyCode.Enter], "", enterContext);
-    addKeybinding(editor, onCtrlEnterKey, [KeyCode.Enter | KeyMod.CtrlCmd], "", enterContext);
-    addKeybinding(editor, onShiftEnterKey, [KeyCode.Enter | KeyMod.Shift], "", enterContext);
-    addKeybinding(editor, onTabKey, [KeyCode.Tab], "", enterContext);
-    addKeybinding(editor, onShiftTabKey, [KeyCode.Tab | KeyMod.Shift], "", enterContext);
-    addKeybinding(editor, onBackspaceKey, [KeyCode.Backspace], "");
+    addKeybinding(editor, onEnterKey, [KeyCode.Enter], "", enterContext, null);
+    addKeybinding(editor, onCtrlEnterKey, [KeyCode.Enter | KeyMod.CtrlCmd], "", enterContext, null);
+    addKeybinding(editor, onShiftEnterKey, [KeyCode.Enter | KeyMod.Shift], "", enterContext, null);
+    addKeybinding(editor, onTabKey, [KeyCode.Tab], "", enterContext, null);
+    addKeybinding(editor, onShiftTabKey, [KeyCode.Tab | KeyMod.Shift], "", enterContext, null);
+    addKeybinding(editor, onBackspaceKey, [KeyCode.Backspace], "", null, null);
 
     //
     // context.subscriptions.push(

@@ -6,9 +6,9 @@ import { fixMarker } from './listEditing';
 import {TextDocument, TextEditor} from "./vscode-monaco";
 import {Position, Selection, Range, WorkspaceEdit} from "./extHostTypes";
 
-export function addKeybinding(editor: TextEditor, fun: CallableFunction, keybindings: number[], label: string, context?: string) {
+export function addKeybinding(editor: TextEditor, fun: CallableFunction, keybindings: number[], label?: string, context?: string, contextMenuGroupId = "markdown.extension.editing") {
     editor.addAction({
-        contextMenuGroupId: "markdown.extension.editing",
+        contextMenuGroupId: contextMenuGroupId,
         contextMenuOrder: 0,
         id: "markdown.extension.editing." + fun.name,
         keybindingContext: context,
