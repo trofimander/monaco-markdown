@@ -8,7 +8,6 @@ export class MonacoMarkdownExtension {
     activate(editor: editor.IStandaloneCodeEditor) {
         let textEditor = new TextEditor(editor, 'markdown')
 
-        console.log("HIIIIII")
         activateFormatting(textEditor)
         activateListEditing(textEditor)
         activateCompletion(textEditor)

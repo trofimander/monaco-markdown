@@ -105,6 +105,9 @@ export class TextDocument {
     }
 
     getText(range?: Range): string {
+        if (!range) {
+            return this.model.getValue()
+        }
         return this.model.getValueInRange(TypeConverters.Range.from(range));
     }
 

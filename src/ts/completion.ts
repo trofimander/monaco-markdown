@@ -5,7 +5,7 @@ import {CancellationToken, editor, languages, Position as _Position} from 'monac
 
 import {TextDocument, TextEditor,} from './vscode-monaco'
 
-import {Position, Range, SnippetString,} from './extHostTypes'
+import {Range, SnippetString, Position} from './extHostTypes'
 
 import {slugify} from './util';
 import {buildToc} from './toc';
@@ -18,6 +18,10 @@ export function activateCompletion(_: TextEditor) {
         languages.registerCompletionItemProvider('markdown', new MdCompletionItemProvider());
         completionActivated = true;
     }
+}
+
+function completionList(items: languages.CompletionItem[]): languages.CompletionList {
+    return {suggestions: items.map((v, _,) => Object.assign({}, v))};
 }
 
 function newCompletionItem(text: string, kind: languages.CompletionItemKind): languages.CompletionItem {
@@ -39,7 +43,7 @@ function newCompletionItem(text: string, kind: languages.CompletionItemKind): la
 }
 
 class MdCompletionItemProvider implements languages.CompletionItemProvider {
-    triggerCharacters: ['(', '\\', '/', '[', '#']
+    // triggerCharacters: ['(', '\\', '/', '[', '#']
 
     // Suffixes explained:
     // \cmd         -> 0
@@ -408,8 +412,7 @@ class MdCompletionItemProvider implements languages.CompletionItemProvider {
 
         let matches;
         if (
-            (matches = lineTextBefore.match(/\\+$/)) !== null
-            && matches[0].length % 2 !== 0
+            (matches = lineTextBefore.match(/\\[^$]*$/)) !== null
         ) {
             /* ┌────────────────┐
                │ Math functions │
@@ -419,19 +422,20 @@ class MdCompletionItemProvider implements languages.CompletionItemProvider {
                 && lineTextAfter.includes('$')
             ) {
                 // Complete math functions (inline math)
-                return {suggestions: this.mathCompletions};
+                return completionList(this.mathCompletions);
             } else {
                 const textBefore = document.getText(new Range(new Position(0, 0), position));
                 const textAfter = document.getText().substr(document.offsetAt(position));
+
                 if (
                     (matches = textBefore.match(/\$\$/g)) !== null
                     && matches.length % 2 !== 0
                     && textAfter.includes('\$\$')
                 ) {
                     // Complete math functions ($$ ... $$)
-                    return {suggestions: this.mathCompletions};
+                    return completionList(this.mathCompletions)
                 } else {
-                    return {suggestions: []};
+                    return completionList([]);
                 }
             }
         } else if (/\[[^\]]*?\]\[[^\]]*$/.test(lineTextBefore)) {
@@ -470,7 +474,7 @@ class MdCompletionItemProvider implements languages.CompletionItemProvider {
                     return prev;
                 }, []);
 
-                res({suggestions: refLabels});
+                res(completionList(refLabels));
             });
         } else if (/\[[^\]]*\]\(#[^\)]*$/.test(lineTextBefore)) {
             /* ┌───────────────────────────┐
@@ -515,10 +519,10 @@ class MdCompletionItemProvider implements languages.CompletionItemProvider {
                     return prev;
                 }, []);
 
-                res({suggestions: headingCompletions});
+                res(completionList(headingCompletions));
             });
         } else {
-            return {suggestions: []};
+            return completionList([]);
         }
     }
 }
