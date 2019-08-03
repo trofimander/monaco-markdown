@@ -6,14 +6,14 @@ import {activateCompletion} from "./completion";
 
 export class MonacoMarkdownExtension {
     activate(editor: editor.IStandaloneCodeEditor) {
-        let textEditor = new TextEditor(editor, 'markdown')
+        let textEditor = new TextEditor(editor)
 
         activateFormatting(textEditor)
         activateListEditing(textEditor)
         activateCompletion(textEditor)
 
         // Allow `*` in word pattern for quick styling
-        setWordDefinitionFor('markdown',
+        setWordDefinitionFor(textEditor.languageId,
             /(-?\d*\.\d\w*)|([^\!\@\#\%\^\&\(\)\-\=\+\[\{\]\}\\\|\;\:\'\"\,\.\<\>\/\?\s\，\。\《\》\？\；\：\‘\“\’\”\（\）\【\】\、]+)/g
         );
     }

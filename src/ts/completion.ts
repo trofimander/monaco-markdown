@@ -12,10 +12,10 @@ import {buildToc} from './toc';
 
 let completionActivated = false
 
-export function activateCompletion(_: TextEditor) {
+export function activateCompletion(editor: TextEditor) {
     if (!completionActivated) {
         //TODO: remove provider when context is disposed
-        languages.registerCompletionItemProvider('markdown', new MdCompletionItemProvider());
+        languages.registerCompletionItemProvider(editor.languageId, new MdCompletionItemProvider());
         completionActivated = true;
     }
 }
@@ -409,7 +409,7 @@ class MdCompletionItemProvider implements languages.CompletionItemProvider {
     }
 
     provideCompletionItems(model: editor.ITextModel, _position: _Position, _context: languages.CompletionContext, _token: CancellationToken): languages.ProviderResult<languages.CompletionList> {
-        let document = new TextDocument(model, 'markdown')
+        let document = new TextDocument(model)
         let position = TypeConverters.Position.to(_position)
 
         const lineTextBefore = document.lineAt(position.line).text.substring(0, position.character);

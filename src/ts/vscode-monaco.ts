@@ -58,9 +58,9 @@ export class TextDocument {
 
     private _textLines: TextLine[] = [];
 
-    constructor(model: editor.ITextModel, languageId: string) {
+    constructor(model: editor.ITextModel) {
         this.model = model;
-        this.languageId = languageId
+        this.languageId = getLanguageId(model)
     }
 
     get eol(): EndOfLine {
@@ -235,18 +235,23 @@ export class TextDocument {
 }
 
 
-export class TextEditor {
-    private _editor: editor.IStandaloneCodeEditor;
-    private _disposed: boolean = false;
-    private _languageId: string;
+function getLanguageId(model: editor.ITextModel) {
+    // @ts-ignore
+    return model.getLanguageIdentifier().language;
+}
 
-    constructor(editor: editor.IStandaloneCodeEditor, languageId: string) {
+export class TextEditor {
+    private readonly _editor: editor.IStandaloneCodeEditor;
+    private _disposed: boolean = false;
+    public readonly languageId: string;
+
+    constructor(editor: editor.IStandaloneCodeEditor) {
         this._editor = editor;
-        this._languageId = languageId;
+        this.languageId = getLanguageId(editor.getModel());
     }
 
     get document(): TextDocument {
-        return new TextDocument(this._editor.getModel(), this._languageId)
+        return new TextDocument(this._editor.getModel())
     }
 
     get selection(): Selection {
