@@ -243,11 +243,13 @@ function getLanguageId(model: editor.ITextModel) {
 export class TextEditor {
     private readonly _editor: editor.IStandaloneCodeEditor;
     private _disposed: boolean = false;
-    public readonly languageId: string;
+
+    public get languageId(): string {
+        return getLanguageId(this._editor.getModel())
+    }
 
     constructor(editor: editor.IStandaloneCodeEditor) {
         this._editor = editor;
-        this.languageId = getLanguageId(editor.getModel());
     }
 
     get document(): TextDocument {
