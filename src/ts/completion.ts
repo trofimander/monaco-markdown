@@ -15,8 +15,19 @@ let completionActivated = false
 export function activateCompletion(editor: TextEditor) {
     if (!completionActivated) {
         //TODO: remove provider when context is disposed
-        languages.registerCompletionItemProvider(editor.languageId, new MdCompletionItemProvider());
+        let provider = new MdCompletionItemProvider();
+        languages.registerCompletionItemProvider(editor.languageId, provider);
+
+        // @ts-ignore
+        editor.editor.onDidType((text:string) => {
+            // for some reason monaco doesn't trigger completion for '//' when it is registered as triggerCharacter
+            const lastChar = text.charAt(text.length - 1);
+            if (lastChar === "\\") {
+                editor.editor.trigger('keyboard', 'editor.action.triggerSuggest', {})
+            }
+        });
         completionActivated = true;
+
     }
 }
 

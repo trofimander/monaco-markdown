@@ -241,39 +241,39 @@ function getLanguageId(model: editor.ITextModel) {
 }
 
 export class TextEditor {
-    private readonly _editor: editor.IStandaloneCodeEditor;
+    public readonly editor: editor.IStandaloneCodeEditor;
     private _disposed: boolean = false;
 
     public get languageId(): string {
-        return getLanguageId(this._editor.getModel())
+        return getLanguageId(this.editor.getModel())
     }
 
     constructor(editor: editor.IStandaloneCodeEditor) {
-        this._editor = editor;
+        this.editor = editor;
     }
 
     get document(): TextDocument {
-        return new TextDocument(this._editor.getModel())
+        return new TextDocument(this.editor.getModel())
     }
 
     get selection(): Selection {
-        return TypeConverters.Selection.to(this._editor.getSelection())
+        return TypeConverters.Selection.to(this.editor.getSelection())
     }
 
     set selection(value: Selection) {
-        this._editor.setSelection(TypeConverters.Selection.from(value))
+        this.editor.setSelection(TypeConverters.Selection.from(value))
     }
 
     get selections(): Selection[] {
-        return this._editor.getSelections().map(s => TypeConverters.Selection.to(s))
+        return this.editor.getSelections().map(s => TypeConverters.Selection.to(s))
     }
 
     set selections(value: Selection[]) {
-        this._editor.setSelections(value.map(s => TypeConverters.Selection.from(s)))
+        this.editor.setSelections(value.map(s => TypeConverters.Selection.from(s)))
     }
 
     get visibleRanges(): Range[] {
-        return this._editor.getVisibleRanges().map(r => TypeConverters.Range.to(r))
+        return this.editor.getVisibleRanges().map(r => TypeConverters.Range.to(r))
     }
 
     edit(callback: (edit: TextEditorEdit) => void, options: { undoStopBefore: boolean; undoStopAfter: boolean; } = {
@@ -335,7 +335,7 @@ export class TextEditor {
             };
         });
 
-        this._editor.getModel().pushEditOperations(this._editor.getSelections(), edits,
+        this.editor.getModel().pushEditOperations(this.editor.getSelections(), edits,
             (): _Selection[] => {
                 return [];
             })
@@ -358,7 +358,7 @@ export class TextEditor {
     // }
 
     revealRange(range: Range, revealType?: TextEditorRevealType): void {
-        revealRangeInEditor(this._editor, TypeConverters.Range.from(range), revealType)
+        revealRangeInEditor(this.editor, TypeConverters.Range.from(range), revealType)
     }
 
     // @ts-ignore
@@ -370,7 +370,7 @@ export class TextEditor {
         if (!newSelections) {
             newSelections = []
         }
-        this._editor.getModel().pushEditOperations(this._editor.getSelections(), TypeConverters.WorkspaceEdit.from(edit),
+        this.editor.getModel().pushEditOperations(this.editor.getSelections(), TypeConverters.WorkspaceEdit.from(edit),
             (): _Selection[] => {
                 return newSelections.map(s => TypeConverters.Selection.from(s));
             })
@@ -379,20 +379,20 @@ export class TextEditor {
     }
 
     addAction(param: { contextMenuOrder: number; keybindingContext: string; run(editor: editor.ICodeEditor): (void | Promise<void>); id: string; label: string; precondition: string; contextMenuGroupId: string; keybindings: number[] }) {
-        this._editor.addAction(param)
+        this.editor.addAction(param)
     }
 
     executeCommand(commandId: string, ...rest: any[]): Promise<void> {
         switch (commandId) {
             case 'type':
-                this._editor.trigger('keyboard', commandId, rest[0])
+                this.editor.trigger('keyboard', commandId, rest[0])
                 return Promise.resolve()
             case 'tab':
             case 'deleteLeft':
-                this._editor.trigger('keyboard', commandId, undefined)
+                this.editor.trigger('keyboard', commandId, undefined)
                 return Promise.resolve()
             default:
-                let action = this._editor.getAction(commandId)
+                let action = this.editor.getAction(commandId)
                 if (action) {
                     if (action.isSupported()) {
                         return action.run();
