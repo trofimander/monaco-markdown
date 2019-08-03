@@ -18,16 +18,7 @@ export function activateCompletion(editor: TextEditor) {
         let provider = new MdCompletionItemProvider();
         languages.registerCompletionItemProvider(editor.languageId, provider);
 
-        // @ts-ignore
-        editor.editor.onDidType((text:string) => {
-            // for some reason monaco doesn't trigger completion for '//' when it is registered as triggerCharacter
-            const lastChar = text.charAt(text.length - 1);
-            if (lastChar === "\\") {
-                editor.editor.trigger('keyboard', 'editor.action.triggerSuggest', {})
-            }
-        });
         completionActivated = true;
-
     }
 }
 
@@ -54,7 +45,7 @@ function newCompletionItem(text: string, kind: languages.CompletionItemKind): la
 }
 
 class MdCompletionItemProvider implements languages.CompletionItemProvider {
-    triggerCharacters: ['(', '\\', '/', '[', '#']
+    triggerCharacters = ['(', '\\', '/', '[', '#']
 
     // Suffixes explained:
     // \cmd         -> 0
