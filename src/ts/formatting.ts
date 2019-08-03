@@ -6,7 +6,7 @@ import {editor, KeyCode, KeyMod} from 'monaco-editor';
 import {TextDocument, TextEditor} from "./vscode-monaco";
 import {Position, Selection, Range, WorkspaceEdit} from "./extHostTypes";
 
-function addKeybinding(editor: editor.IStandaloneCodeEditor, fun: CallableFunction, keybindings: number[], label: string) {
+export function addKeybinding(editor: TextEditor, fun: CallableFunction, keybindings: number[], label: string) {
     editor.addAction({
         contextMenuGroupId: "markdown.extension.editing",
         contextMenuOrder: 0,
@@ -15,14 +15,14 @@ function addKeybinding(editor: editor.IStandaloneCodeEditor, fun: CallableFuncti
         keybindings: keybindings,
         label: label,
         precondition: "",
-        run(editor: editor.ICodeEditor): void | Promise<void> {
-            fun(new TextEditor(editor, 'markdown'))
+        run(_: editor.ICodeEditor): void | Promise<void> {
+            fun(editor)
             return undefined;
         }
     });
 }
 
-export function activateFormatting(editor: editor.IStandaloneCodeEditor) {
+export function activateFormatting(editor: TextEditor) {
     addKeybinding(editor, toggleBold, [KeyMod.CtrlCmd | KeyCode.KEY_B], "Toggle bold");
     addKeybinding(editor, toggleItalic, [KeyMod.CtrlCmd | KeyCode.KEY_I], "Toggle italic");
     addKeybinding(editor, toggleCodeSpan, [KeyMod.CtrlCmd | KeyCode.US_BACKTICK], "Toggle code span");

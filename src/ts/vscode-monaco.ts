@@ -32,6 +32,7 @@ export function getWordDefinitionFor(modeId: string): RegExp | undefined {
 function revealRangeInEditor(_editor: editor.ICodeEditor, range: IRange, revealType: TextEditorRevealType): void {
     switch (revealType) {
         case TextEditorRevealType.Default:
+        case undefined:
             _editor.revealRange(range, editor.ScrollType.Smooth);
             break;
         case TextEditorRevealType.InCenter:
@@ -232,11 +233,11 @@ export class TextDocument {
 
 
 export class TextEditor {
-    private _editor: editor.ICodeEditor;
+    private _editor: editor.IStandaloneCodeEditor;
     private _disposed: boolean = false;
     private _languageId: string;
 
-    constructor(editor: editor.ICodeEditor, languageId: string) {
+    constructor(editor: editor.IStandaloneCodeEditor, languageId: string) {
         this._editor = editor;
         this._languageId = languageId;
     }
@@ -268,7 +269,7 @@ export class TextEditor {
     edit(callback: (edit: TextEditorEdit) => void, options: { undoStopBefore: boolean; undoStopAfter: boolean; } = {
         undoStopBefore: true,
         undoStopAfter: true
-    }): Promise<boolean> {
+    }): Promise<void> {
         if (this._disposed) {
             return Promise.reject(new Error('TextEditor#edit not possible on closed editors'));
         }
@@ -277,12 +278,12 @@ export class TextEditor {
         return this._applyEdit(edit);
     }
 
-    private _applyEdit(editBuilder: TextEditorEdit): Promise<boolean> {
+    private _applyEdit(editBuilder: TextEditorEdit): Promise<void> {
         const editData = editBuilder.finalize();
 
         // return when there is nothing to do
         if (editData.edits.length === 0 && !editData.setEndOfLine) {
-            return Promise.resolve(true);
+            return Promise.resolve(null);
         }
 
         // check that the edits are not overlapping (i.e. illegal)
@@ -329,7 +330,7 @@ export class TextEditor {
                 return [];
             })
 
-        return Promise.resolve(true)
+        return Promise.resolve(null)
     }
 
     // insertSnippet(snippet: SnippetString, where?: Position | readonly Position[] | Range | readonly Range[], options: { undoStopBefore: boolean; undoStopAfter: boolean; } = {
@@ -355,13 +356,56 @@ export class TextEditor {
     //     throw new Error("Not implemented")
     // }
 
-    applyEdit(edit: WorkspaceEdit, newSelections: Selection[]): Thenable<boolean> {
+    applyEdit(edit: WorkspaceEdit, newSelections?: Selection[]): Thenable<void> {
+        if (!newSelections) {
+            newSelections = []
+        }
         this._editor.getModel().pushEditOperations(this._editor.getSelections(), TypeConverters.WorkspaceEdit.from(edit),
             (): _Selection[] => {
                 return newSelections.map(s => TypeConverters.Selection.from(s));
             })
 
-        return Promise.resolve(true)
+        return Promise.resolve(null)
+    }
+
+    addAction(param: { contextMenuOrder: number; keybindingContext: string; run(editor: editor.ICodeEditor): (void | Promise<void>); id: string; label: string; precondition: string; contextMenuGroupId: string; keybindings: number[] }) {
+        this._editor.addAction(param)
+    }
+
+    executeCommand(commandId: string, ...rest: any[]): Promise<void> {
+        switch (commandId) {
+            case 'type':
+                this._editor.trigger('keyboard', commandId, rest[0])
+                return Promise.resolve()
+            case 'tab':
+            case 'deleteLeft':
+                this._editor.trigger('keyboard', commandId, undefined)
+                return Promise.resolve()
+            default:
+                let action = this._editor.getAction(commandId)
+                if (action) {
+                    if (action.isSupported()) {
+                        return action.run();
+                    }
+                } else {
+                    new Error("unknown action id " + commandId)
+                }
+        }
+    }
+
+    getConfiguration(configurationId: string) {
+        switch (configurationId) {
+            case '':
+                break
+            default:
+                return new UndefinedConfiguration()
+        }
+    }
+}
+
+class UndefinedConfiguration {
+    get<T>(_: string): T {
+        return undefined;
     }
 }
 

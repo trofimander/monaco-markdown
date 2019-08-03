@@ -1,9 +1,10 @@
 'use strict'
 
-import {editor, Position, Range} from 'monaco-editor';
+import {TextDocument} from "./vscode-monaco";
+import {Position, Range} from "./extHostTypes";
 
-export function isInFencedCodeBlock(doc: editor.ITextModel, lineNum: number): boolean {
-    let textBefore = doc.getValueInRange(Range.fromPositions(new Position(0, 0), new Position(lineNum, 0)));
+export function isInFencedCodeBlock(doc: TextDocument, lineNum: number): boolean {
+    let textBefore = doc.getText(new Range(new Position(0, 0), new Position(lineNum, 0)));
     let matches = textBefore.match(/^```[\w ]*$/gm);
     if (matches == null) {
         return false;

@@ -1,10 +1,14 @@
 import {editor} from 'monaco-editor';
 import {activateFormatting} from "./formatting";
-import {setWordDefinitionFor} from "./vscode-monaco";
+import {setWordDefinitionFor, TextEditor} from "./vscode-monaco";
+import {activateListEditing} from "./listEditing";
 
 export class MonacoMarkdownExtension {
     activate(editor: editor.IStandaloneCodeEditor) {
-        activateFormatting(editor)
+        let textEditor = new TextEditor(editor, 'markdown')
+
+        activateFormatting(textEditor)
+        activateListEditing(textEditor)
 
         // Allow `*` in word pattern for quick styling
         setWordDefinitionFor('markdown',
