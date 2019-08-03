@@ -3,6 +3,7 @@ import {activateFormatting} from "./formatting";
 import {setWordDefinitionFor, TextEditor} from "./vscode-monaco";
 import {activateListEditing} from "./listEditing";
 import {activateCompletion} from "./completion";
+import {activateTableFormatter} from "./tableFormatter";
 
 export class MonacoMarkdownExtension {
     activate(editor: editor.IStandaloneCodeEditor) {
@@ -11,6 +12,7 @@ export class MonacoMarkdownExtension {
         activateFormatting(textEditor)
         activateListEditing(textEditor)
         activateCompletion(textEditor)
+        activateTableFormatter(textEditor)
 
         // Allow `*` in word pattern for quick styling
         setWordDefinitionFor(textEditor.languageId,
