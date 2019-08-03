@@ -54,7 +54,7 @@ function newCompletionItem(text: string, kind: languages.CompletionItemKind): la
 }
 
 class MdCompletionItemProvider implements languages.CompletionItemProvider {
-    // triggerCharacters: ['(', '\\', '/', '[', '#']
+    triggerCharacters: ['(', '\\', '/', '[', '#']
 
     // Suffixes explained:
     // \cmd         -> 0
@@ -480,6 +480,7 @@ class MdCompletionItemProvider implements languages.CompletionItemProvider {
                         const ref = match[1];
                         let item = newCompletionItem(ref, languages.CompletionItemKind.Reference);
                         const usages = usageCounts.get(ref) || 0;
+                        item.insertText = ref
                         item.documentation = {value: (match[2])};
                         item.detail = usages === 1 ? `1 usage` : `${usages} usages`;
                         // Prefer unused items
@@ -527,6 +528,8 @@ class MdCompletionItemProvider implements languages.CompletionItemProvider {
 
                     if (addClosingParen) {
                         item.insertText = item.label + ')';
+                    } else {
+                        item.insertText = item.label
                     }
 
                     item.documentation = curr.text;
