@@ -374,6 +374,8 @@ class MdCompletionItemProvider implements languages.CompletionItemProvider {
         )).map(cmd => {
             let item = newCompletionItem('\\' + cmd, languages.CompletionItemKind.Function);
             item.insertText = new SnippetString(`${cmd}\{$1\}`).value;
+            item.insertTextRules = languages.CompletionItemInsertTextRule.InsertAsSnippet
+
             return item;
         });
         // \cmd{$1}{$2}
@@ -385,10 +387,13 @@ class MdCompletionItemProvider implements languages.CompletionItemProvider {
         )).map(cmd => {
             let item = newCompletionItem('\\' + cmd, languages.CompletionItemKind.Function);
             item.insertText = new SnippetString(`${cmd}\{$1\}\{$2\}`).value;
+            item.insertTextRules = languages.CompletionItemInsertTextRule.InsertAsSnippet
+
             return item;
         });
         let envSnippet = newCompletionItem('\\begin', languages.CompletionItemKind.Snippet);
         envSnippet.insertText = new SnippetString('begin{${1|aligned,alignedat,array,bmatrix,Bmatrix,cases,darray,dcases,gathered,matrix,pmatrix,vmatrix,Vmatrix|}}\n\t$2\n\\end{$1}').value;
+        envSnippet.insertTextRules = languages.CompletionItemInsertTextRule.InsertAsSnippet
 
         this.mathCompletions = [...c1, ...c2, ...c3, envSnippet];
         // Sort
