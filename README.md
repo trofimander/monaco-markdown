@@ -7,10 +7,21 @@ This is a port of [Markdown extension for VS Code](https://github.com/yzhang-gh/
  and the functionality is pretty much the same.
  
  
-###Run demo
+### Run demo
 
 To launch the demo web page, execute `gulp dist` (see package.json fro details)
 and then open `demo\index.html`.
+
+
+### Features
+
+* Toggle bold/italic/strikethrough/math actions
+* Headings up/down actions
+* Toggle list
+* Lists auto-numbering on enter
+* List items indent/dedent on tab/shift-tab
+* Suggestions for LaTeX, header references, and link labels
+* Formatting for tables
 
 
 
