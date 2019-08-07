@@ -5,6 +5,8 @@ import {activateListEditing} from "./listEditing";
 import {activateCompletion} from "./completion";
 import {activateTableFormatter} from "./tableFormatter";
 
+import {activateMarkdownMath} from "./markdown-math/markdown.contribution";
+
 export class MonacoMarkdownExtension {
     activate(editor: editor.IStandaloneCodeEditor) {
         let textEditor = new TextEditor(editor)
@@ -20,3 +22,5 @@ export class MonacoMarkdownExtension {
         );
     }
 }
+
+activateMarkdownMath()

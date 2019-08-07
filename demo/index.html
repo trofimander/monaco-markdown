@@ -26,7 +26,7 @@
         if (txtFile.readyState === 4) {
             if (txtFile.status === 200) {
                 var editor = monaco.editor.create(document.getElementById('container'), {
-                    language: 'markdown',
+                    language: 'markdown-math',
                     value: txtFile.responseText
                 });
 
