@@ -132,7 +132,7 @@ export const language = <languages.IMonarchLanguage>{
 				{token: '@rematch', next: 'mathInline', goBack:2},
 				{token: 'comment.math', bracket: '@close'}]],
 
-			[/(\$)([^$]*)(\$)/, [{token: 'comment.math', bracket: '@open'},
+			[/(\$)([^$]+)(\$)/, [{token: 'comment.math', bracket: '@open'},
 				{token: '@rematch', next: 'mathInline', goBack:1},
 				{token: 'comment.math', bracket: '@close'}]],
 
