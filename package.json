@@ -59,6 +59,6 @@
   },
   "scripts": {
     "dist": "gulp dist",
-    "clean": "gulp clean",
+    "clean": "gulp clean"
   }
 }

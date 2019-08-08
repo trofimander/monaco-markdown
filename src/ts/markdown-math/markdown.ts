@@ -6,6 +6,7 @@
 'use strict';
 
 import {languages} from "monaco-editor"
+import {begin_args, all} from "./latex";
 
 export const conf: languages.LanguageConfiguration = {
 	comments: {
@@ -53,6 +54,10 @@ export const language = <languages.IMonarchLanguage>{
 		'hr', 'img', 'input', 'isindex', 'link', 'meta', 'param'
 	],
 
+	latexKeywords: all,
+
+	latexBeginKeywords: begin_args,
+
 	tokenizer: {
 		root: [
 
@@ -84,7 +89,7 @@ export const language = <languages.IMonarchLanguage>{
 			[/^\s*```\s*$/, { token: 'string', next: '@codeblock' }],
 
 			//math
-			[/(^\${2})$/, {token: 'comment', next: 'math', bracket: '@open'}],
+			[/(^\${2})\s*$/, {token: 'comment.math', next: 'math', bracket: '@open'}],
 
 
 			// markup within lines
@@ -123,7 +128,13 @@ export const language = <languages.IMonarchLanguage>{
 			[/(!?\[)((?:[^\]\\]|@escapes)*)(\])/, 'string.link'],
 
 			//inline math
-			[/(\${1,2})([^$]+)(\${1,2})/, ['comment', '', 'comment']],
+			[/(\$\$)([^$]*)(\$\$)/, [{token: 'comment.math', bracket: '@open'},
+				{token: '@rematch', next: 'mathInline', goBack:2},
+				{token: 'comment.math', bracket: '@close'}]],
+
+			[/(\$)([^$]*)(\$)/, [{token: 'comment.math', bracket: '@open'},
+				{token: '@rematch', next: 'mathInline', goBack:1},
+				{token: 'comment.math', bracket: '@close'}]],
 
 			// or html
 			{ include: 'html' },
@@ -194,7 +205,25 @@ export const language = <languages.IMonarchLanguage>{
 		],
 
 		math: [
-			[/^(\${2})$/, { token: 'comment', next: '@pop', bracket: '@close'}]
+			[/(\${2})/, { token: 'comment.math', next: '@pop', bracket: '@close'}],
+			{ include: 'latex' },
+		],
+
+		mathInline: [
+			[/\${1,2}/, { token: 'comment.math', next: '@pop', bracket: '@close'}],
+			{ include: 'latex' },
+		],
+
+		latex: [
+			[/(\\begin)({)/, ['keyword', {token: '', next: 'latexBeginArg'}]],
+			[/(\\end)({)/, ['keyword', {token: '', next: 'latexBeginArg'}]],
+			[/\\\w+/, { cases: { '@latexKeywords': 'keyword', '@default': '' } }],
+		],
+
+		latexBeginArg: [
+			[/\w+/, { cases: { '@latexBeginKeywords': 'keyword', '@default': '' }}],
+			[/}/, { token: '', next: '@pop', bracket: '@close'}]
 		]
+
 	}
 };
