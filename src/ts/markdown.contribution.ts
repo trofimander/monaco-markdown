@@ -19,6 +19,4 @@ export function activateMarkdownMath() {
 			})
 		}
 	});
-
-	console.log("monaco-math language registered")
 }
