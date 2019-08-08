@@ -5,7 +5,7 @@ import {activateListEditing} from "./listEditing";
 import {activateCompletion} from "./completion";
 import {activateTableFormatter} from "./tableFormatter";
 
-import {activateMarkdownMath} from "./markdown-math/markdown.contribution";
+import {activateMarkdownMath} from "./markdown.contribution";
 
 export class MonacoMarkdownExtension {
     activate(editor: editor.IStandaloneCodeEditor) {

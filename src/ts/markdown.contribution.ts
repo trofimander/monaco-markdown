@@ -5,13 +5,17 @@
 'use strict';
 
 import { registerLanguage } from './contribution';
+import {default as markdown} from "./markdown";
 
 export function activateMarkdownMath() {
 	registerLanguage({
 		id: 'markdown-math',
 		extensions: ['.md', '.markdown', '.mdown', '.mkdn', '.mkd', '.mdwn', '.mdtxt', '.mdtext'],
 		aliases: ['Markdown', 'markdown'],
-		loader: () => import('./markdown')
+		loader: () => Promise.resolve({
+			conf: markdown.conf,
+			language: markdown.language
+		})
 	});
 
 	console.log("monaco-math language registered")
