@@ -503,8 +503,11 @@ class MdCompletionItemProvider implements languages.CompletionItemProvider {
             } else {
                 // If no closing paren is found, replace all trailing non-white-space chars and add a closing paren
                 // distance to first non-whitespace or EOL
-                const toReplace = (lineTextAfter.search(/(?<=^\S+)(\s|$)/))
-                endPosition = position.with({character: +endPosition.character + toReplace});
+                let toReplace = 0;
+                while (toReplace<lineTextAfter.length && ' \t\n\r\v'.indexOf(lineTextAfter.charAt(toReplace)) != -1) {
+                    toReplace++;
+                }
+                endPosition = position.with({character: + endPosition.character + toReplace});
 
                 addClosingParen = true;
             }
