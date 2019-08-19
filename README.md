@@ -26,5 +26,8 @@ and then open `demo\index.html`.
 
 
 
+### Usage
+
+There is an npm package for the library: https://www.npmjs.com/package/monaco-markdown
 
 
