@@ -278,14 +278,14 @@ function createLinkRegex(): RegExp {
     // Host patterns
     const hostname_re = '[a-z' + ul + '0-9](?:[a-z' + ul + '0-9-]{0,61}[a-z' + ul + '0-9])?';
     // Max length for domain name labels is 63 characters per RFC 1034 sec. 3.1
-    const domain_re = '(?:\\.(?!-)[a-z' + ul + '0-9-]{1,63}(?<!-))*';
+    const domain_re = '(?:\\.(?!-)[a-z' + ul + '0-9-]{1,63})*';
 
     const tld_re = ''
         + '\\.'                               // dot
         + '(?!-)'                             // can't start with a dash
         + '(?:[a-z' + ul + '-]{2,63}'         // domain label
         + '|xn--[a-z0-9]{1,59})'              // or punycode label
-        + '(?<!-)'                            // can't end with a dash
+        // + '(?<!-)'                            // can't end with a dash
         + '\\.?'                              // may have a trailing dot
     ;
 
