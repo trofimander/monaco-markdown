@@ -89,7 +89,7 @@ export const language = <languages.IMonarchLanguage>{
 			[/^\s*```\s*$/, { token: 'string', next: '@codeblock' }],
 
 			//math
-			[/(^\${2})\s*$/, {token: 'comment.math', next: 'math', bracket: '@open'}],
+			[/(^\${2})/, {token: 'comment.math', next: 'math', bracket: '@open'}],
 
 
 			// markup within lines
