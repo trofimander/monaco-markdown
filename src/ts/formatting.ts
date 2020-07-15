@@ -6,11 +6,11 @@ import { fixMarker } from './listEditing';
 import {TextDocument, TextEditor} from "./vscode-monaco";
 import {Position, Selection, Range, WorkspaceEdit} from "./extHostTypes";
 
-export function addKeybinding(editor: TextEditor, fun: CallableFunction, keybindings: number[], label?: string, context?: string, contextMenuGroupId = "markdown.extension.editing") {
+export function addKeybinding(editor: TextEditor, name: String, fun: CallableFunction, keybindings: number[], label?: string, context?: string, contextMenuGroupId = "markdown.extension.editing") {
     editor.addAction({
         contextMenuGroupId: contextMenuGroupId,
         contextMenuOrder: 0,
-        id: "markdown.extension.editing." + fun.name,
+        id: "markdown.extension.editing." + name,
         keybindingContext: context,
         keybindings: keybindings,
         label: label,
@@ -23,15 +23,15 @@ export function addKeybinding(editor: TextEditor, fun: CallableFunction, keybind
 }
 
 export function activateFormatting(editor: TextEditor) {
-    addKeybinding(editor, toggleBold, [KeyMod.CtrlCmd | KeyCode.KEY_B], "Toggle bold");
-    addKeybinding(editor, toggleItalic, [KeyMod.CtrlCmd | KeyCode.KEY_I], "Toggle italic");
-    addKeybinding(editor, toggleCodeSpan, [KeyMod.CtrlCmd | KeyCode.US_BACKTICK], "Toggle code span");
-    addKeybinding(editor, toggleStrikethrough, [KeyMod.Alt | KeyCode.KEY_S], "Toggle strikethrough");
-    addKeybinding(editor, toggleMath, [KeyMod.CtrlCmd | KeyCode.KEY_M], "Toggle math");
-    addKeybinding(editor, toggleMathReverse, [KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KEY_M], "Toggle math reverse");
-    addKeybinding(editor, toggleHeadingUp, [KeyMod.WinCtrl | KeyMod.Shift | KeyCode.US_CLOSE_SQUARE_BRACKET], "Heading up");
-    addKeybinding(editor, toggleHeadingDown, [KeyMod.WinCtrl | KeyMod.Shift | KeyCode.US_OPEN_SQUARE_BRACKET], "Heading down");
-    addKeybinding(editor, toggleList, [KeyMod.CtrlCmd | KeyCode.KEY_L], "Toggle list");
+    addKeybinding(editor, "toggleBold", toggleBold, [KeyMod.CtrlCmd | KeyCode.KEY_B], "Toggle bold");
+    addKeybinding(editor, "toggleItalic", toggleItalic, [KeyMod.CtrlCmd | KeyCode.KEY_I], "Toggle italic");
+    addKeybinding(editor, "toggleCodeSpan", toggleCodeSpan, [KeyMod.CtrlCmd | KeyCode.US_BACKTICK], "Toggle code span");
+    addKeybinding(editor, "toggleStrikethrough", toggleStrikethrough, [KeyMod.Alt | KeyCode.KEY_S], "Toggle strikethrough");
+    addKeybinding(editor, "toggleMath", toggleMath, [KeyMod.CtrlCmd | KeyCode.KEY_M], "Toggle math");
+    addKeybinding(editor, "toggleMathReverse", toggleMathReverse, [KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KEY_M], "Toggle math reverse");
+    addKeybinding(editor, "toggleHeadingUp", toggleHeadingUp, [KeyMod.WinCtrl | KeyMod.Shift | KeyCode.US_CLOSE_SQUARE_BRACKET], "Heading up");
+    addKeybinding(editor, "toggleHeadingDown", toggleHeadingDown, [KeyMod.WinCtrl | KeyMod.Shift | KeyCode.US_OPEN_SQUARE_BRACKET], "Heading down");
+    addKeybinding(editor, "toggleList", toggleList, [KeyMod.CtrlCmd | KeyCode.KEY_L], "Toggle list");
     // addKeybinding(editor, paste, [KeyMod.CtrlCmd | KeyCode.KEY_B], "Toggle bold");
 }
 
