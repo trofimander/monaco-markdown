@@ -369,8 +369,12 @@ function styleByWrapping(editor: TextEditor, startPattern: string, endPattern?: 
         }
     });
 
+    const hasSelection = editor.selection && !editor.selection.isEmpty;
+
     return editor.applyEdit(batchEdit, newSelections).then(() => {
-        editor.selections = newSelections;
+        if (!hasSelection) {
+            editor.selections = newSelections;
+        }
     });
 }
 
