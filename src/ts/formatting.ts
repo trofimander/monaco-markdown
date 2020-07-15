@@ -362,7 +362,9 @@ function styleByWrapping(editor: TextEditor, startPattern: string, endPattern?: 
         }
     });
 
-    return editor.applyEdit(batchEdit, newSelections)
+    return editor.applyEdit(batchEdit, newSelections).then(() => {
+        editor.selections = newSelections;
+    });
 }
 
 /**
