@@ -59,6 +59,8 @@ function toggleStrikethrough(editor: TextEditor) {
     return styleByWrapping(editor, '~~');
 }
 
+const maxHeading = '######';
+
 function toggleHeadingUp(editor: TextEditor) {
     let lineIndex = editor.selection.active.line;
     let lineText = editor.document.lineAt(lineIndex).text;
@@ -66,7 +68,10 @@ function toggleHeadingUp(editor: TextEditor) {
     return editor.edit((editBuilder) => {
         if (!lineText.startsWith('#')) { // Not a heading
             editBuilder.insert(new Position(lineIndex, 0), '# ');
-        } else if (!lineText.startsWith('######')) { // Already a heading (but not level 6)
+        } else if (lineText.startsWith(maxHeading)) { // Reset heading at 6 level
+            let deleteIndex = lineText.startsWith(maxHeading + ' ') ? maxHeading.length + 1 : maxHeading.length;
+            editBuilder.delete(new Range(new Position(lineIndex, 0), new Position(lineIndex, deleteIndex)));
+        } else {
             editBuilder.insert(new Position(lineIndex, 0), '#');
         }
     });
@@ -81,6 +86,8 @@ function toggleHeadingDown(editor: TextEditor) {
             editBuilder.delete(new Range(new Position(lineIndex, 0), new Position(lineIndex, 2)));
         } else if (lineText.startsWith('#')) { // Heading (but not level 1)
             editBuilder.delete(new Range(new Position(lineIndex, 0), new Position(lineIndex, 1)));
+        } else { // No heading
+            editBuilder.insert(new Position(lineIndex, 0), maxHeading + ' ');
         }
     });
 }
