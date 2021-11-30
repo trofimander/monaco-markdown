@@ -237,7 +237,7 @@ export class TextDocument {
 
 function getLanguageId(model: editor.ITextModel) {
     // @ts-ignore
-    return model.getLanguageIdentifier().language;
+    return model.getLanguageId();
 }
 
 export class TextEditor {

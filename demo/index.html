@@ -3,7 +3,7 @@
 <head>
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
-    <link rel="stylesheet" data-name="vs/editor/editor.main" href="../dist/node_modules/monaco-editor/min/vs/editor/editor.main.css">
+    <link rel="stylesheet" data-name="vs/editor/editor.main" href="../node_modules/monaco-editor/min/vs/editor/editor.main.css">
 </head>
 <body>
 
@@ -14,30 +14,20 @@
 </div>
 
 <script>var require = { paths: { 'vs': '../node_modules/monaco-editor/min/vs' } };</script>
-<script src="../dist/node_modules/monaco-editor/min/vs/loader.js"></script>
-<script src="../dist/node_modules/monaco-editor/min/vs/editor/editor.main.nls.js"></script>
-<script src="../dist/node_modules/monaco-editor/min/vs/editor/editor.main.js"></script>
+<script src="../node_modules/monaco-editor/min/vs/loader.js"></script>
+<script src="../node_modules/monaco-editor/min/vs/editor/editor.main.nls.js"></script>
+<script src="../node_modules/monaco-editor/min/vs/editor/editor.main.js"></script>
 <script src="../dist/umd/monaco-markdown.js"></script>
 
 <script>
-    var txtFile = new XMLHttpRequest();
-    txtFile.open("GET", "sample.md", true);
-    txtFile.onreadystatechange = function() {
-        if (txtFile.readyState === 4) {
-            if (txtFile.status === 200) {
-                var editor = monaco.editor.create(document.getElementById('container'), {
-                    language: 'markdown-math',
-                    value: txtFile.responseText
-                });
-
-                require(['MonacoMarkdown'], function(MonacoMarkdown) {
-                    var extension = new MonacoMarkdown.MonacoMarkdownExtension()
-                    extension.activate(editor)
-                });
-            }
-        }
-    }
-    txtFile.send(null);
+    var editor = monaco.editor.create(document.getElementById('container'), {
+        language: 'markdown-math',
+        value: "# text"
+    });
+    require(['MonacoMarkdown'], function(MonacoMarkdown) {
+        var extension = new MonacoMarkdown.MonacoMarkdownExtension()
+        extension.activate(editor)
+    });
 </script>
 
 </body>
