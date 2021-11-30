@@ -23,15 +23,15 @@ export function addKeybinding(editor: TextEditor, name: String, fun: CallableFun
 }
 
 export function activateFormatting(editor: TextEditor) {
-    addKeybinding(editor, "toggleBold", toggleBold, [KeyMod.CtrlCmd | KeyCode.KEY_B], "Toggle bold");
-    addKeybinding(editor, "toggleItalic", toggleItalic, [KeyMod.CtrlCmd | KeyCode.KEY_I], "Toggle italic");
-    addKeybinding(editor, "toggleCodeSpan", toggleCodeSpan, [KeyMod.CtrlCmd | KeyCode.US_BACKTICK], "Toggle code span");
-    addKeybinding(editor, "toggleStrikethrough", toggleStrikethrough, [KeyMod.Alt | KeyCode.KEY_S], "Toggle strikethrough");
-    addKeybinding(editor, "toggleMath", toggleMath, [KeyMod.CtrlCmd | KeyCode.KEY_M], "Toggle math");
-    addKeybinding(editor, "toggleMathReverse", toggleMathReverse, [KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KEY_M], "Toggle math reverse");
-    addKeybinding(editor, "toggleHeadingUp", toggleHeadingUp, [KeyMod.WinCtrl | KeyMod.Shift | KeyCode.US_CLOSE_SQUARE_BRACKET], "Heading up");
-    addKeybinding(editor, "toggleHeadingDown", toggleHeadingDown, [KeyMod.WinCtrl | KeyMod.Shift | KeyCode.US_OPEN_SQUARE_BRACKET], "Heading down");
-    addKeybinding(editor, "toggleList", toggleList, [KeyMod.CtrlCmd | KeyCode.KEY_L], "Toggle list");
+    addKeybinding(editor, "toggleBold", toggleBold, [KeyMod.CtrlCmd | KeyCode.KeyB], "Toggle bold");
+    addKeybinding(editor, "toggleItalic", toggleItalic, [KeyMod.CtrlCmd | KeyCode.KeyI], "Toggle italic");
+    addKeybinding(editor, "toggleCodeSpan", toggleCodeSpan, [KeyMod.CtrlCmd | KeyCode.Backquote], "Toggle code span");
+    addKeybinding(editor, "toggleStrikethrough", toggleStrikethrough, [KeyMod.Alt | KeyCode.KeyS], "Toggle strikethrough");
+    addKeybinding(editor, "toggleMath", toggleMath, [KeyMod.CtrlCmd | KeyCode.KeyM], "Toggle math");
+    addKeybinding(editor, "toggleMathReverse", toggleMathReverse, [KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KeyM], "Toggle math reverse");
+    addKeybinding(editor, "toggleHeadingUp", toggleHeadingUp, [KeyMod.WinCtrl | KeyMod.Shift | KeyCode.BracketLeft], "Heading up");
+    addKeybinding(editor, "toggleHeadingDown", toggleHeadingDown, [KeyMod.WinCtrl | KeyMod.Shift | KeyCode.BracketRight], "Heading down");
+    addKeybinding(editor, "toggleList", toggleList, [KeyMod.CtrlCmd | KeyCode.KeyL], "Toggle list");
     // addKeybinding(editor, paste, [KeyMod.CtrlCmd | KeyCode.KEY_B], "Toggle bold");
 }
 
